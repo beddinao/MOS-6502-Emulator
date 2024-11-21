@@ -1,1 +1,1 @@
-# MOS-6502-Emulator
+# *`MOS-6502-Emulator`*
