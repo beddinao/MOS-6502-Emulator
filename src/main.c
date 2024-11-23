@@ -15,10 +15,12 @@ int	main(int c, char **v)
 		return 1;
 	memset(mos6502, 0, sizeof(_6502));
 
-
 	/// /// /		LOADING INSTRUCTIONS
 	load_instructions(mos6502);
 
+	uint8_t		ram[RAM_SIZE];
+	memset(ram, 0, sizeof(ram));
+
 	/// / //		CYCLE
-	instruction_cycle(mos6502);
+	instruction_cycle(mos6502, ram);
 }
