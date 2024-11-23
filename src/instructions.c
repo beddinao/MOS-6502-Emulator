@@ -10,3 +10,9 @@
 
 // /// /	INSTRUCTIONS	
 
+
+/// / //	LOADING
+
+void	load_instructions(_6502* mos6502) {
+	(void)mos6502;
+}
