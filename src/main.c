@@ -5,9 +5,7 @@ void	load_instructions(_6502* mos6502) {
 	(void)mos6502;
 }
 
-int	main(int c, char **v)
-{
-	(void)v;
+int	main() {
 	srand(time(0));
 
 	_6502	*mos6502 = malloc(sizeof(_6502));

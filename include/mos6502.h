@@ -4,13 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <time.h>
-#include <unistd.h>
-#include <pthread.h>
 #include <sys/time.h>
-#include <math.h>
+#include <stdlib.h>
 
 #define	RAM_SIZE	0xFA00
 

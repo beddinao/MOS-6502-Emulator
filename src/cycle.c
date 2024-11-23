@@ -11,10 +11,8 @@
 // /// /	CYCLE
 
 void	*instruction_cycle(void *p, uint8_t *ram) {
-	mos6502	*_6502 = (mos6502*)p;
-	
-
-
-
+	_6502	*mos6502 = (_6502*)p;
+	(void)ram;
+	(void)mos6502;
 	return NULL;
 }
