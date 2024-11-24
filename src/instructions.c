@@ -10,9 +10,19 @@
 
 // /// /	INSTRUCTIONS	
 
+uint8_t	BRK_IMP(_6502* mos6502) {
+	printf("BRK IMP\n");
+	return 7;
+}
+
+uint8_t	X(_6502 *mos6502) {
+	printf("illegal opcode\n");
+	return 0;
+}
 
 /// / //	LOADING
 
-void	load_instructions(_6502* mos6502) {
-	(void)mos6502;
+void	load_instructions(_6502* mos6502){
+	for (uint8_t i = 0; i < 0xFF; i++)
+		mos6502->instructions[i] = X;
 }
