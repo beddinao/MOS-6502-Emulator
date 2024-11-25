@@ -9,11 +9,29 @@
    */
 
 // /// /	CYCLE
-/*
-void	*instruction_cycle(void *p, uint8_t *ram) {
+
+void	instruction_cycle(void *p) {
 	_6502	*mos6502 = (_6502*)p;
-	(void)ram;
-	(void)mos6502;
-	return NULL;
+	_bus	*bus = mos6502->bus;
+	uint8_t	*ram = bus->ram;
+
+	while (1) {
+		if (mos6502->cycles) {
+			mos6502->cycles--;
+			continue;
+		}
+
+		mos6502->opcode = bus->read(ram, mos6502->PC);
+
+		mos6502->cycles = mos6502->instructions[mos6502->opcode](mos6502);
+
+		mos6502->PC += 1;
+
+		if (mos6502->PC > RAM_SIZE
+			|| mos6502->PC > PROGRAM_START + bus->ram_occupied
+			|| mos6502->PC < PROGRAM_START) {
+			printf("unauthorized memory access\n");
+			break;
+		}
+	}
 }
-*/

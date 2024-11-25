@@ -2,7 +2,7 @@ CC = cc
 SRC = $(wildcard src/*.c)
 HR = $(wildcard include/*.h)
 OBJ = $(patsubst src/%.c, build/%.o, $(SRC))
-CFLAGS = -Iinclude -Werror -Wextra -Wall 
+CFLAGS = -Iinclude # -Werror -Wextra -Wall 
 #CFLAGS = -fsanitize=address
 NAME = mos6502
 

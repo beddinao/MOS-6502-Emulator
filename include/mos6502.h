@@ -7,14 +7,24 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
-#define	RAM_SIZE		0xFA00
-#define	PROGRAM_START	0x0600
-#define	STACK_START	0x0100
-#define	STACK_SIZE	0x00FF
-#define	STACK_END		0x01FF
+#define ADDRESS_RANGE	0x10000
+#define RAM_SIZE		0x0800  // 2KB for RAM (0x0000–0x07FF)
+#define PROGRAM_START  0x0600  // 
+#define ROM_START      0xC000  // ROM
+#define ROM_SIZE       0x4000  // 16KB
+#define STACK_START    0x0100  // 256
+#define STACK_END      0x01FF  // 511 
+
+
+#define	RAM_SIZE		0x10000 // 64Kb
+#define	PROGRAM_START	0x0600 // 1536
+#define	MAX_PROGRAM_SIZE	0xFA00 // 64000
+#define	STACK_START	0x0100 // 256
+#define	STACK_SIZE	0x00FF // 255
+#define	STACK_END		0x01FF // 511
 
 typedef	struct _bus {
-	uint8_t		ram[RAM_SIZE];
+	uint8_t		ram[ADDRESS_RANGE];
 	uint16_t		ram_occupied;
 	void		(*write)(uint8_t*, uint16_t, uint8_t);
 	uint8_t		(*read)(uint8_t*, uint16_t);
@@ -31,7 +41,7 @@ typedef	struct _6502 {
 	uint8_t		ST;	// status register
 				// N V - B D I Z C
 	////////////
-	void		(*instructions[0xFF])(struct _6502*);
+	uint8_t		(*instructions[0xFF])(struct _6502*);
 	////////////
 	uint8_t		opcode;
 	////////////
