@@ -17,6 +17,7 @@
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
 	//printf("BRK IMP\n");
+	mos6502->PC += 1;
 	return 7;
 }
 
@@ -27,6 +28,7 @@ uint8_t	BRK_IMP(_6502* mos6502) {
 */
 uint8_t	ORA_INDX(_6502* mos6502) {
 	//printf("ORA_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -38,6 +40,7 @@ uint8_t	ORA_INDX(_6502* mos6502) {
 */
 uint8_t	ORA_ZP(_6502* mos6502){
 	//printf("ORA_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -48,6 +51,7 @@ uint8_t	ORA_ZP(_6502* mos6502){
 */
 uint8_t	ASL_ZP(_6502* mos6502) {
 	//printf("ASL_ZP\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -58,6 +62,7 @@ uint8_t	ASL_ZP(_6502* mos6502) {
 */
 uint8_t	PHP_IMP(_6502 *mos6502) {
 	//printf("PHP_IMP\n");
+	mos6502->PC += 1;
 	return 3;
 }
 
@@ -68,6 +73,7 @@ uint8_t	PHP_IMP(_6502 *mos6502) {
 */
 uint8_t	ORA_IMM(_6502 *mos6502) {
 	//printf("ORA_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -78,6 +84,7 @@ uint8_t	ORA_IMM(_6502 *mos6502) {
 */
 uint8_t	ASL_ACC(_6502 *mos6502) {
 	//printf("ASL_ACC\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -88,6 +95,7 @@ uint8_t	ASL_ACC(_6502 *mos6502) {
 */
 uint8_t	ORA_ABS(_6502 *mos6502) {
 	//printf("ORA_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -98,6 +106,7 @@ uint8_t	ORA_ABS(_6502 *mos6502) {
 */
 uint8_t	ASL_ABS(_6502* mos6502) {
 	//printf("ASL_ABS\n");
+	mos6502->PC += 3;
 	return 6;
 }
 
@@ -108,6 +117,7 @@ uint8_t	ASL_ABS(_6502* mos6502) {
 */
 uint8_t	BPL_REL(_6502 *mos6502) {
 	//printf("BPL_REL\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -118,6 +128,7 @@ uint8_t	BPL_REL(_6502 *mos6502) {
 */
 uint8_t	ORA_INDY(_6502* mos6502) {
 	//printf("ORA_INDY\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -128,6 +139,7 @@ uint8_t	ORA_INDY(_6502* mos6502) {
 */
 uint8_t	ORA_ZPX(_6502* mos6502) {
 	//printf("ORA_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -138,6 +150,7 @@ uint8_t	ORA_ZPX(_6502* mos6502) {
 */
 uint8_t	ASL_ZPX(_6502* mos6502) {
 	//printf("ASL_ZPX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -148,6 +161,7 @@ uint8_t	ASL_ZPX(_6502* mos6502) {
 */
 uint8_t	CLC_IMP(_6502 *mos6502) {
 	//printf("CLC_IMP\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -158,6 +172,7 @@ uint8_t	CLC_IMP(_6502 *mos6502) {
 */
 uint8_t	ORA_ABSY(_6502 *mos6502) {
 	//printf("ORA_ABSY\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -168,6 +183,7 @@ uint8_t	ORA_ABSY(_6502 *mos6502) {
 */
 uint8_t	ORA_ABSX(_6502 *mos6502) {
 	//printf("ORA_ABSX\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -178,6 +194,7 @@ uint8_t	ORA_ABSX(_6502 *mos6502) {
 */
 uint8_t	ASL_ABSX(_6502 *mos6502) {
 	//printf("ASL_ABSX\n");
+	mos6502->PC += 3;
 	return 7;
 }
 
@@ -188,6 +205,7 @@ uint8_t	ASL_ABSX(_6502 *mos6502) {
 */
 uint8_t	JSR_ABS(_6502* mos6502) {
 	//printf("JSR_ABS\n");
+	mos6502->PC += 3;
 	return 6;
 }
 
@@ -198,6 +216,7 @@ uint8_t	JSR_ABS(_6502* mos6502) {
 */
 uint8_t	AND_INDX(_6502 *mos6502) {
 	//printf("AND_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -208,6 +227,7 @@ uint8_t	AND_INDX(_6502 *mos6502) {
 */
 uint8_t	BIT_ZP(_6502 *mos6502) {
 	//printf("BIT_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -218,6 +238,7 @@ uint8_t	BIT_ZP(_6502 *mos6502) {
 */
 uint8_t	AND_ZP(_6502 *mos6502) {
 	//printf("AND_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -228,6 +249,7 @@ uint8_t	AND_ZP(_6502 *mos6502) {
 */
 uint8_t	ROL_ZP(_6502 *mos6502) {
 	//printf("ROL_ZP\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -238,6 +260,7 @@ uint8_t	ROL_ZP(_6502 *mos6502) {
 */
 uint8_t	PLP_IMP(_6502 *mos6502) {
 	//printf("PLP_IMP\n");
+	mos6502->PC += 1;
 	return 4;
 }
 
@@ -248,6 +271,7 @@ uint8_t	PLP_IMP(_6502 *mos6502) {
 */
 uint8_t	AND_IMM(_6502 *mos6502) {
 	//printf("AND_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -258,6 +282,7 @@ uint8_t	AND_IMM(_6502 *mos6502) {
 */
 uint8_t	ROL_ACC(_6502 *mos6502) {
 	//printf("ROL_ACC\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -268,6 +293,7 @@ uint8_t	ROL_ACC(_6502 *mos6502) {
 */
 uint8_t	BIT_ABS(_6502 *mos6502) {
 	//printf("BIT_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -278,6 +304,7 @@ uint8_t	BIT_ABS(_6502 *mos6502) {
 */
 uint8_t	AND_ABS(_6502 *mos6502) {
 	//printf("AND_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -288,6 +315,7 @@ uint8_t	AND_ABS(_6502 *mos6502) {
 */
 uint8_t	ROL_ABS(_6502 *mos6502) {
 	//printf("ROL_ABS\n");
+	mos6502->PC += 3;
 	return 6;
 }
 
@@ -298,6 +326,7 @@ uint8_t	ROL_ABS(_6502 *mos6502) {
 */
 uint8_t	BMI_REL(_6502 *mos6502) {
 	//printf("BMI_REL\b");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -308,6 +337,7 @@ uint8_t	BMI_REL(_6502 *mos6502) {
 */
 uint8_t	AND_INDY(_6502 *mos6502) {
 	//printf("AND_INDY\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -318,6 +348,7 @@ uint8_t	AND_INDY(_6502 *mos6502) {
 */
 uint8_t	AND_ZPX(_6502 *mos6502) {
 	//printf("AND_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -328,6 +359,7 @@ uint8_t	AND_ZPX(_6502 *mos6502) {
 */
 uint8_t	ROL_ZPX(_6502 *mos6502) {
 	//printf("ROL_ZPX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -338,6 +370,7 @@ uint8_t	ROL_ZPX(_6502 *mos6502) {
 */
 uint8_t	SEC_IMP(_6502 *mos6502) {
 	//printf("SEC_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -348,6 +381,7 @@ uint8_t	SEC_IMP(_6502 *mos6502) {
 */
 uint8_t	AND_ABSY(_6502 *mos6502) {
 	//printf("AND_ABSY\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -358,6 +392,7 @@ uint8_t	AND_ABSY(_6502 *mos6502) {
 */
 uint8_t	AND_ABSX(_6502 *mos6502) {
 	//printf("AND_ABSX\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -368,6 +403,7 @@ uint8_t	AND_ABSX(_6502 *mos6502) {
 */
 uint8_t	ROL_ABSX(_6502 *mos6502) {
 	//printf("ROL_ABSX\n");
+	mos6502->PC += 3;
 	return 7;
 }
 
@@ -378,6 +414,7 @@ uint8_t	ROL_ABSX(_6502 *mos6502) {
 */
 uint8_t	RTI_IMP(_6502 *mos6502) {
 	//printf("RTI_IMP\n");
+	mos6502->PC += 1;
 	return 6;
 }
 
@@ -388,6 +425,7 @@ uint8_t	RTI_IMP(_6502 *mos6502) {
 */
 uint8_t	EOR_INDX(_6502 *mos6502) {
 	//printf("EOR_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -398,6 +436,7 @@ uint8_t	EOR_INDX(_6502 *mos6502) {
 */
 uint8_t	EOR_ZP(_6502 *mos6502) {
 	//printf("EOR_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -408,6 +447,7 @@ uint8_t	EOR_ZP(_6502 *mos6502) {
 */
 uint8_t	LSR_ZP(_6502 *mos6502) {
 	//printf("LSR_ZP\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -418,6 +458,7 @@ uint8_t	LSR_ZP(_6502 *mos6502) {
 */
 uint8_t	PHA_IMP(_6502 *mos6502) {
 	//printf("PHA_IMP\n");
+	mos6502->PC += 1;
 	return 3;
 }
 
@@ -428,6 +469,7 @@ uint8_t	PHA_IMP(_6502 *mos6502) {
 */
 uint8_t	EOR_IMM(_6502 *mos6502) {
 	//printf("EOR_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -438,6 +480,7 @@ uint8_t	EOR_IMM(_6502 *mos6502) {
 */
 uint8_t	LSR_ACC(_6502 *mos6502) {
 	//printf("LSR_ACC\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -448,6 +491,7 @@ uint8_t	LSR_ACC(_6502 *mos6502) {
 */
 uint8_t	JMP_ABS(_6502 *mos6502) {
 	//printf("JMP_ABS\n");
+	mos6502->PC += 3;
 	return 3;
 }
 
@@ -458,6 +502,7 @@ uint8_t	JMP_ABS(_6502 *mos6502) {
 */
 uint8_t	EOR_ABS(_6502 *mos6502) {
 	//printf("EOR_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -468,6 +513,7 @@ uint8_t	EOR_ABS(_6502 *mos6502) {
 */
 uint8_t	LSR_ABS(_6502 *mos6502) {
 	//printf("LSR_ABS\n");
+	mos6502->PC += 3;
 	return 6;
 }
 
@@ -478,6 +524,7 @@ uint8_t	LSR_ABS(_6502 *mos6502) {
 */
 uint8_t	BVC_REL(_6502 *mos6502) {
 	//printf("BVC_REL\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -488,6 +535,7 @@ uint8_t	BVC_REL(_6502 *mos6502) {
 */
 uint8_t	EOR_INDY(_6502 *mos6502) {
 	//printf("EOR_INDY\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -498,6 +546,7 @@ uint8_t	EOR_INDY(_6502 *mos6502) {
 */
 uint8_t	EOR_ZPX(_6502 *mos6502) {
 	//printf("EOR_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -508,6 +557,7 @@ uint8_t	EOR_ZPX(_6502 *mos6502) {
 */
 uint8_t	LSR_ZPX(_6502 *mos6502) {
 	//printf("LSR_ZPX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -518,6 +568,7 @@ uint8_t	LSR_ZPX(_6502 *mos6502) {
 */
 uint8_t	CLI_IMP(_6502 *mos6502) {
 	//printf("CLI_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -528,6 +579,7 @@ uint8_t	CLI_IMP(_6502 *mos6502) {
 */
 uint8_t	EOR_ABSY(_6502 *mos6502) {
 	//printf("EOR_ABSY\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -538,6 +590,7 @@ uint8_t	EOR_ABSY(_6502 *mos6502) {
 */
 uint8_t	EOR_ABSX(_6502 *mos6502) {
 	//printf("EOR_ABSX\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -548,6 +601,7 @@ uint8_t	EOR_ABSX(_6502 *mos6502) {
 */
 uint8_t	LSR_ABSX(_6502 *mos6502) {
 	//printf("LSR_ABSX\n");
+	mos6502->PC += 3;
 	return 7;
 }
 
@@ -558,6 +612,7 @@ uint8_t	LSR_ABSX(_6502 *mos6502) {
 */
 uint8_t	RTS_IMP(_6502 *mos6502) {
 	//printf("RTS_IMP\n");
+	mos6502->PC += 1;
 	return 6;
 }
 
@@ -568,6 +623,7 @@ uint8_t	RTS_IMP(_6502 *mos6502) {
 */
 uint8_t	ADC_INDX(_6502 *mos6502) {
 	//printf("ADC_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -578,6 +634,7 @@ uint8_t	ADC_INDX(_6502 *mos6502) {
 */
 uint8_t	ADC_ZP(_6502 *mos6502) {
 	//printf("ADC_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -588,6 +645,7 @@ uint8_t	ADC_ZP(_6502 *mos6502) {
 */
 uint8_t	ROR_ZP(_6502 *mos6502) {
 	//printf("ROR_ZP\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -598,6 +656,7 @@ uint8_t	ROR_ZP(_6502 *mos6502) {
 */
 uint8_t	PLA_IMP(_6502 *mos6502) {
 	//printf("PLA_IMP\n");
+	mos6502->PC += 1;
 	return 4;
 }
 
@@ -608,6 +667,7 @@ uint8_t	PLA_IMP(_6502 *mos6502) {
 */
 uint8_t	ADC_IMM(_6502 *mos6502) {
 	//printf("ADC_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -618,6 +678,7 @@ uint8_t	ADC_IMM(_6502 *mos6502) {
 */
 uint8_t	ROR_ACC(_6502* mos6502) {
 	//printf("ROR_ACC\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -628,6 +689,7 @@ uint8_t	ROR_ACC(_6502* mos6502) {
 */
 uint8_t	JMP_IND(_6502 *mos6502) {
 	//printf("JMP_IND\n");
+	mos6502->PC += 3;
 	return 5;
 }
 
@@ -638,6 +700,7 @@ uint8_t	JMP_IND(_6502 *mos6502) {
 */
 uint8_t	ADC_ABS(_6502 *mos6502) {
 	//printf("ADC_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -648,6 +711,7 @@ uint8_t	ADC_ABS(_6502 *mos6502) {
 */
 uint8_t	ROR_ABS(_6502 *mos6502) {
 	//printf("ROR_ABS\n");
+	mos6502->PC += 3;
 	return 6;
 }
 
@@ -658,6 +722,7 @@ uint8_t	ROR_ABS(_6502 *mos6502) {
 */
 uint8_t	BVS_REL(_6502 *mos6502) {
 	//printf("BVS_REL\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -668,6 +733,7 @@ uint8_t	BVS_REL(_6502 *mos6502) {
 */
 uint8_t	ADC_INDY(_6502 *mos6502) {
 	//printf("ADC_INDY\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -678,6 +744,7 @@ uint8_t	ADC_INDY(_6502 *mos6502) {
 */
 uint8_t	ADC_ZPX(_6502 *mos6502) {
 	//printf("ASC_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -688,6 +755,7 @@ uint8_t	ADC_ZPX(_6502 *mos6502) {
 */
 uint8_t	ROR_ZPX(_6502 *mos6502) {
 	//printf("ROR_ZPX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -698,6 +766,7 @@ uint8_t	ROR_ZPX(_6502 *mos6502) {
 */
 uint8_t	SEI_IMP(_6502 *mos6502) {
 	//printf("SEI_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -708,6 +777,7 @@ uint8_t	SEI_IMP(_6502 *mos6502) {
 */
 uint8_t	ADC_ABSY(_6502* mos6502) {
 	//printf("ADC_ABSY\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -718,6 +788,7 @@ uint8_t	ADC_ABSY(_6502* mos6502) {
 */
 uint8_t	ADC_ABSX(_6502 *mos6502) {
 	//printf("ADC_ABSX\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -728,6 +799,7 @@ uint8_t	ADC_ABSX(_6502 *mos6502) {
 */
 uint8_t	ROR_ABSX(_6502 *mos6502) {
 	//printf("ROR_ABSX\n");
+	mos6502->PC += 3;
 	return 7;
 }
 
@@ -738,6 +810,7 @@ uint8_t	ROR_ABSX(_6502 *mos6502) {
 */
 uint8_t	STA_INDX(_6502 *mos6502) {
 	//printf("STA_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -748,6 +821,7 @@ uint8_t	STA_INDX(_6502 *mos6502) {
 */
 uint8_t	STY_ZP(_6502 *mos6502) {
 	//printf("STY_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -758,6 +832,7 @@ uint8_t	STY_ZP(_6502 *mos6502) {
 */
 uint8_t	STA_ZP(_6502 *mos6502) {
 	//printf("STA_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -768,6 +843,7 @@ uint8_t	STA_ZP(_6502 *mos6502) {
 */
 uint8_t	STX_ZP(_6502 *mos6502) {
 	//printf("STX_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -778,6 +854,7 @@ uint8_t	STX_ZP(_6502 *mos6502) {
 */
 uint8_t	DEY_IMP(_6502* mos6502) {
 	//printf("DEY_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -788,6 +865,7 @@ uint8_t	DEY_IMP(_6502* mos6502) {
 */
 uint8_t	TXA_IMP(_6502 *mos6502) {
 	//printf("TXA_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -798,6 +876,7 @@ uint8_t	TXA_IMP(_6502 *mos6502) {
 */
 uint8_t	STY_ABS(_6502 *mos6502) {
 	//printf("STY_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -808,16 +887,18 @@ uint8_t	STY_ABS(_6502 *mos6502) {
 */
 uint8_t	STA_ABS(_6502 *mos6502) {
 	//printf("STA_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
 /*
 	STX
 	ABSOLUTE
-	3Bytes, 4 Cycles
+	3 Bytes, 4 Cycles
 */
 uint8_t	STX_ABS(_6502 *mos6502) {
 	//printf("STX_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -828,6 +909,7 @@ uint8_t	STX_ABS(_6502 *mos6502) {
 */
 uint8_t	BCC_REL(_6502 *mos6502) {
 	//printf("BCC_REL\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -838,6 +920,7 @@ uint8_t	BCC_REL(_6502 *mos6502) {
 */
 uint8_t	STA_INDY(_6502 *mos6502) {
 	//printf("STA_INDY\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -848,6 +931,7 @@ uint8_t	STA_INDY(_6502 *mos6502) {
 */
 uint8_t	STY_ZPX(_6502 *mos6502) {
 	//printf("STY_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -858,6 +942,7 @@ uint8_t	STY_ZPX(_6502 *mos6502) {
 */
 uint8_t	STA_ZPX(_6502 *mos6502) {
 	//printf("STA_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -868,6 +953,7 @@ uint8_t	STA_ZPX(_6502 *mos6502) {
 */
 uint8_t	STX_ZPY(_6502 *mos6502) {
 	//printf("STX_ZPY\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -878,6 +964,7 @@ uint8_t	STX_ZPY(_6502 *mos6502) {
 */
 uint8_t	TYA_IMP(_6502 *mos6502) {
 	//printf("TYA_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -888,6 +975,7 @@ uint8_t	TYA_IMP(_6502 *mos6502) {
 */
 uint8_t	STA_ABSY(_6502 *mos6502) {
 	//printf("STA_ABSY\n");
+	mos6502->PC += 3;
 	return 5;
 }
 
@@ -898,6 +986,7 @@ uint8_t	STA_ABSY(_6502 *mos6502) {
 */
 uint8_t	TXS_IMP(_6502 *mos6502) {
 	//printf("TXS_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -908,6 +997,7 @@ uint8_t	TXS_IMP(_6502 *mos6502) {
 */
 uint8_t	STA_ABSX(_6502 *mos6502) {
 	//printf("STA_ABSX\n");
+	mos6502->PC += 3;
 	return 5;
 }
 
@@ -918,6 +1008,7 @@ uint8_t	STA_ABSX(_6502 *mos6502) {
 */
 uint8_t	LDY_IMM(_6502 *mos6502) {
 	//printf("LDY_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -928,6 +1019,7 @@ uint8_t	LDY_IMM(_6502 *mos6502) {
 */
 uint8_t	LDA_INDX(_6502 *mos6502) {
 	//printf("LDA_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -938,6 +1030,7 @@ uint8_t	LDA_INDX(_6502 *mos6502) {
 */
 uint8_t	LDX_IMM(_6502 *mos6502) {
 	//printf("LDX_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -948,6 +1041,7 @@ uint8_t	LDX_IMM(_6502 *mos6502) {
 */
 uint8_t	LDY_ZP(_6502 *mos6502) {
 	//printf("LDY_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -958,6 +1052,7 @@ uint8_t	LDY_ZP(_6502 *mos6502) {
 */
 uint8_t	LDA_ZP(_6502 *mos6502) {
 	//printf("LDA_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -968,6 +1063,7 @@ uint8_t	LDA_ZP(_6502 *mos6502) {
 */
 uint8_t	LDX_ZP(_6502 *mos6502) {
 	//printf("LDX_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -978,6 +1074,7 @@ uint8_t	LDX_ZP(_6502 *mos6502) {
 */
 uint8_t	TAY_IMP(_6502 *mos6502) {
 	//printf("TAY_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -988,6 +1085,7 @@ uint8_t	TAY_IMP(_6502 *mos6502) {
 */
 uint8_t	LDA_IMM(_6502 *mos6502) {
 	//printf("LDA_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -998,6 +1096,7 @@ uint8_t	LDA_IMM(_6502 *mos6502) {
 */
 uint8_t	TAX_IMP(_6502 *mos6502) {
 	//printf("TAX_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1008,6 +1107,7 @@ uint8_t	TAX_IMP(_6502 *mos6502) {
 */
 uint8_t	LDY_ABS(_6502 *mos6502) {
 	//printf("LDY_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1018,6 +1118,7 @@ uint8_t	LDY_ABS(_6502 *mos6502) {
 */
 uint8_t	LDA_ABS(_6502 *mos6502) {
 	//printf("LDA_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1028,6 +1129,7 @@ uint8_t	LDA_ABS(_6502 *mos6502) {
 */
 uint8_t	LDX_ABS(_6502 *mos6502) {
 	//printf("LDX_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1038,6 +1140,7 @@ uint8_t	LDX_ABS(_6502 *mos6502) {
 */
 uint8_t	BCS_REL(_6502 *mos6502) {
 	//printf("BCS_REL\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -1048,6 +1151,7 @@ uint8_t	BCS_REL(_6502 *mos6502) {
 */
 uint8_t	LDA_INDY(_6502 *mos6502) {
 	//printf("LDA_INDY\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -1058,6 +1162,7 @@ uint8_t	LDA_INDY(_6502 *mos6502) {
 */
 uint8_t	LDY_ZPX(_6502 *mos6502) {
 	//printf("LDY_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1068,6 +1173,7 @@ uint8_t	LDY_ZPX(_6502 *mos6502) {
 */
 uint8_t	LDA_ZPX(_6502 *mos6502) {
 	//printf("LDA_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1078,6 +1184,7 @@ uint8_t	LDA_ZPX(_6502 *mos6502) {
 */
 uint8_t	LDX_ZPY(_6502 *mos6502) {
 	//printf("LDX_ZPY\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1088,6 +1195,7 @@ uint8_t	LDX_ZPY(_6502 *mos6502) {
 */
 uint8_t	CLV_IMP(_6502 *mos6502) {
 	//printf("CLV_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1098,6 +1206,7 @@ uint8_t	CLV_IMP(_6502 *mos6502) {
 */
 uint8_t	LDA_ABSY(_6502 *mos6502) {
 	//printf("LDA_ABSY\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1108,6 +1217,7 @@ uint8_t	LDA_ABSY(_6502 *mos6502) {
 */
 uint8_t	TSX_IMP(_6502 *mos6502) {
 	//printf("TSX_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1118,6 +1228,7 @@ uint8_t	TSX_IMP(_6502 *mos6502) {
 */
 uint8_t	LDY_ABSX(_6502 *mos6502) {
 	//printf("LDY_ABSX\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1128,6 +1239,7 @@ uint8_t	LDY_ABSX(_6502 *mos6502) {
 */
 uint8_t	LDA_ABSX(_6502 *mos6502) {
 	//printf("LDA_ABSX\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1138,6 +1250,7 @@ uint8_t	LDA_ABSX(_6502 *mos6502) {
 */
 uint8_t	LDX_ABSY(_6502 *mos6502) {
 	//printf("LDX_ABSY\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1148,6 +1261,7 @@ uint8_t	LDX_ABSY(_6502 *mos6502) {
 */
 uint8_t	CPY_IMM(_6502 *mos6502) {
 	//printf("CPY_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -1158,6 +1272,7 @@ uint8_t	CPY_IMM(_6502 *mos6502) {
 */
 uint8_t	CMP_INDX(_6502 *mos6502) {
 	//printf("CMP_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -1168,6 +1283,7 @@ uint8_t	CMP_INDX(_6502 *mos6502) {
 */
 uint8_t	CPY_ZP(_6502 *mos6502) {
 	//printf("CPY_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -1178,6 +1294,7 @@ uint8_t	CPY_ZP(_6502 *mos6502) {
 */
 uint8_t	CMP_ZP(_6502 *mos6502) {
 	//printf("CMP_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -1188,6 +1305,7 @@ uint8_t	CMP_ZP(_6502 *mos6502) {
 */
 uint8_t	DEC_ZP(_6502 *mos6502) {
 	//printf("DEC_ZP\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -1198,6 +1316,7 @@ uint8_t	DEC_ZP(_6502 *mos6502) {
 */
 uint8_t	INY_IMP(_6502 *mos6502) {
 	//printf("INY_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1208,6 +1327,7 @@ uint8_t	INY_IMP(_6502 *mos6502) {
 */
 uint8_t	CMP_IMM(_6502 *mos6502) {
 	//printf("CMP_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -1218,6 +1338,7 @@ uint8_t	CMP_IMM(_6502 *mos6502) {
 */
 uint8_t	DEX_IMP(_6502 *mos6502) {
 	//printf("DEX_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1228,6 +1349,7 @@ uint8_t	DEX_IMP(_6502 *mos6502) {
 */
 uint8_t	CPY_ABS(_6502 *mos6502) {
 	//printf("CPY_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1238,6 +1360,7 @@ uint8_t	CPY_ABS(_6502 *mos6502) {
 */
 uint8_t	CMP_ABS(_6502 *mos6502) {
 	//printf("CMP_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1248,6 +1371,7 @@ uint8_t	CMP_ABS(_6502 *mos6502) {
 */
 uint8_t	DEC_ABS(_6502 *mos6502) {
 	//printf("DEC_ABS\n");
+	mos6502->PC += 3;
 	return 6;
 }
 
@@ -1258,6 +1382,7 @@ uint8_t	DEC_ABS(_6502 *mos6502) {
 */
 uint8_t	BNE_REL(_6502 *mos6502) {
 	//printf("BNE_REL\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -1268,6 +1393,7 @@ uint8_t	BNE_REL(_6502 *mos6502) {
 */
 uint8_t	CMP_INDY(_6502 *mos6502) {
 	//printf("CMP_INDY\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -1278,6 +1404,7 @@ uint8_t	CMP_INDY(_6502 *mos6502) {
 */
 uint8_t	CMP_ZPX(_6502 *mos6502) {
 	//printf("CMP_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1288,6 +1415,7 @@ uint8_t	CMP_ZPX(_6502 *mos6502) {
 */
 uint8_t	DEC_ZPX(_6502 *mos6502) {
 	//printf("DEC_ZPX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -1298,6 +1426,7 @@ uint8_t	DEC_ZPX(_6502 *mos6502) {
 */
 uint8_t	CLD_IMP(_6502 *mos6502) {
 	//printf("CLD_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1308,6 +1437,7 @@ uint8_t	CLD_IMP(_6502 *mos6502) {
 */
 uint8_t	CMP_ABSY(_6502 *mos6502) {
 	//printf("CMP_ABSY\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1318,6 +1448,7 @@ uint8_t	CMP_ABSY(_6502 *mos6502) {
 */
 uint8_t	CMP_ABSX(_6502 *mos6502) {
 	//printf("CMP_ABSX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1328,6 +1459,7 @@ uint8_t	CMP_ABSX(_6502 *mos6502) {
 */
 uint8_t	DEC_ABSX(_6502 *mos6502) {
 	//printf("DEC_ABSX\n");
+	mos6502->PC += 3;
 	return 7;
 }
 
@@ -1338,6 +1470,7 @@ uint8_t	DEC_ABSX(_6502 *mos6502) {
 */
 uint8_t	CPX_IMM(_6502 *mos6502) {
 	//printf("CPX_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -1348,6 +1481,7 @@ uint8_t	CPX_IMM(_6502 *mos6502) {
 */
 uint8_t	SBC_INDX(_6502 *mos6502) {
 	//printf("SBC_INDX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -1358,6 +1492,7 @@ uint8_t	SBC_INDX(_6502 *mos6502) {
 */
 uint8_t	CPX_ZP(_6502 *mos6502) {
 	//printf("CPX_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -1368,6 +1503,7 @@ uint8_t	CPX_ZP(_6502 *mos6502) {
 */
 uint8_t	SBC_ZP(_6502 *mos6502) {
 	//printf("SBC_ZP\n");
+	mos6502->PC += 2;
 	return 3;
 }
 
@@ -1378,6 +1514,7 @@ uint8_t	SBC_ZP(_6502 *mos6502) {
 */
 uint8_t	INC_ZP(_6502 *mos6502) {
 	//printf("INC_ZP\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -1388,6 +1525,7 @@ uint8_t	INC_ZP(_6502 *mos6502) {
 */
 uint8_t	INX_IMP(_6502 *mos6502) {
 	//printf("INX_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1398,6 +1536,7 @@ uint8_t	INX_IMP(_6502 *mos6502) {
 */
 uint8_t	SBC_IMM(_6502 *mos6502) {
 	//printf("SBC_IMM\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -1408,6 +1547,7 @@ uint8_t	SBC_IMM(_6502 *mos6502) {
 */
 uint8_t	NOP_IMP(_6502 *mos6502) {
 	//printf("NOP_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1418,6 +1558,7 @@ uint8_t	NOP_IMP(_6502 *mos6502) {
 */
 uint8_t	CPX_ABS(_6502 *mos6502) {
 	//printf("CPX_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1428,6 +1569,7 @@ uint8_t	CPX_ABS(_6502 *mos6502) {
 */
 uint8_t	SBC_ABS(_6502 *mos6502) {
 	//printf("SBC_ABS\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1438,6 +1580,7 @@ uint8_t	SBC_ABS(_6502 *mos6502) {
 */
 uint8_t	INC_ABS(_6502 *mos6502) {
 	//printf("INC_ABS\n");
+	mos6502->PC += 3;
 	return 6;
 }
 
@@ -1448,6 +1591,7 @@ uint8_t	INC_ABS(_6502 *mos6502) {
 */
 uint8_t	BEQ_REL(_6502 *mos6502) {
 	//printf("BEQ_REL\n");
+	mos6502->PC += 2;
 	return 2;
 }
 
@@ -1458,6 +1602,7 @@ uint8_t	BEQ_REL(_6502 *mos6502) {
 */
 uint8_t	SBC_INDY(_6502 *mos6502) {
 	//printf("SBC_INDY\n");
+	mos6502->PC += 2;
 	return 5;
 }
 
@@ -1468,6 +1613,7 @@ uint8_t	SBC_INDY(_6502 *mos6502) {
 */
 uint8_t	SBC_ZPX(_6502 *mos6502) {
 	//printf("SBC_ZPX\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1478,6 +1624,7 @@ uint8_t	SBC_ZPX(_6502 *mos6502) {
 */
 uint8_t	INC_ZPX(_6502 *mos6502) {
 	//printf("INC_ZPX\n");
+	mos6502->PC += 2;
 	return 6;
 }
 
@@ -1488,6 +1635,7 @@ uint8_t	INC_ZPX(_6502 *mos6502) {
 */
 uint8_t	SED_IMP(_6502 *mos6502) {
 	//printf("SED_IMP\n");
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -1498,6 +1646,7 @@ uint8_t	SED_IMP(_6502 *mos6502) {
 */
 uint8_t	SBC_ABSY(_6502 *mos6502) {
 	//printf("SBC_ABSY\n");
+	mos6502->PC += 2;
 	return 4;
 }
 
@@ -1508,6 +1657,7 @@ uint8_t	SBC_ABSY(_6502 *mos6502) {
 */
 uint8_t	SBC_ABSX(_6502 *mos6502) {
 	//printf("SBC_ABSX\n");
+	mos6502->PC += 3;
 	return 4;
 }
 
@@ -1518,6 +1668,7 @@ uint8_t	SBC_ABSX(_6502 *mos6502) {
 */
 uint8_t	INC_ABSX(_6502 *mos6502) {
 	//printf("INC_ABSX\n");
+	mos6502->PC += 3;
 	return 7;
 }
 
@@ -1528,13 +1679,14 @@ uint8_t	INC_ABSX(_6502 *mos6502) {
 */
 uint8_t	X(_6502 *mos6502) {
 	//printf("illegal opcode\n");
+	mos6502->PC += 1;
 	return 0;
 }
 
 /// / //	LOADING
 
 void	load_instructions(_6502* mos6502){
-	for (uint8_t i = 0; i < 0xFF; i++)
+	for (unsigned i = 0; i < 0x100; i++) 
 		mos6502->instructions[i] = X;
 	//	MSD 0
 	mos6502->instructions[0x00] = BRK_IMP;

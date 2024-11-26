@@ -3,13 +3,12 @@ SRC = $(wildcard src/*.c)
 HR = $(wildcard include/*.h)
 OBJ = $(patsubst src/%.c, build/%.o, $(SRC))
 CFLAGS = -Iinclude # -Werror -Wextra -Wall 
-#CFLAGS = -fsanitize=address
 NAME = mos6502
 
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CC) -o $(NAME) $(OBJ)
+	$(CC) -o $(NAME) $(OBJ) -fsanitize=address -g
 
 build/%.o: src/%.c $(HR)
 	@mkdir -p $(dir $@)

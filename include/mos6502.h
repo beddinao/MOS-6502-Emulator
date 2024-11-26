@@ -22,16 +22,11 @@
 
 #define ROM_SIZE		0x10000  // 64kb
 
-#define KNRM  "\x1B[0m"
-#define KRED  "\x1B[31m"
-#define KGRN  "\x1B[32m"
-#define KYEL  "\x1B[33m"
-#define KBLU  "\x1B[34m"
-#define KAG  "\x1B[35m"
-#define KCYN  "\x1B[36m"
-#define KWHT  "\x1B[37m"
-#define KUND  "\033[4m"
-# define KBGR  "\033[7m"
+#define KNRM		"\x1B[0m"
+#define KRED		"\x1B[31m"
+#define KBLU		"\x1B[34m"
+#define KWHT		"\x1B[37m"
+#define KUND		"\033[4m"
 
 typedef	struct _bus {
 	uint8_t		ram[ADDRESS_RANGE];
@@ -45,7 +40,7 @@ typedef	struct _bus {
 }	_bus;
 
 typedef	struct _6502 { 
-	uint16_t		PC;	// program counter
+	unsigned		PC;	// program counter
 	uint8_t		A;	// Accumulator
 	uint8_t		X;	// Index register
 	uint8_t		Y;	// Index register
@@ -53,7 +48,7 @@ typedef	struct _6502 {
 	uint8_t		ST;	// status register
 				// N V - B D I Z C
 	////////////
-	uint8_t		(*instructions[0xFF])(struct _6502*);
+	uint8_t		(*instructions[0x100])(struct _6502*);
 	uint8_t		opcode;
 	uint8_t		cycles;
 	void		(*reset)(struct _6502*);

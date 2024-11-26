@@ -14,17 +14,29 @@ void print_state(_6502 *mos6502) {
 	printf("PC: %s%04X%s\nAR: %02X\nXR: %02X\nYR: %02X\nSP: %s%02X%s\nSR: %02X\n",
 	KRED, mos6502->PC, KNRM, mos6502->A, mos6502->X, mos6502->Y, KRED, mos6502->SP, KNRM, mos6502->ST);
 
-	unsigned program_end = PROGRAM_START + mos6502->bus->ram_program_size;
-	printf("\n%sROM (%05X - %05X)%s:\n",KUND, PROGRAM_START, program_end, KNRM);
-	for (unsigned ram_addr = PROGRAM_START; ram_addr < program_end; ram_addr += 16) {
+	printf("\nopcode: %02X\n", mos6502->opcode);
+
+	unsigned program_start = mos6502->PC - 0xFF;
+	unsigned program_end = mos6502->PC + 0xFF;
+
+	if (program_end > PROGRAM_START + mos6502->bus->ram_program_size)
+		program_end = PROGRAM_START + mos6502->bus->ram_program_size;
+
+	printf("\nROM (%04X-%04X) ROM-size %04X(bank %04X)/%04X,\n%sROM-part (%04X -> %04X)%s:\n",
+		PROGRAM_START, PROGRAM_START + mos6502->bus->ram_program_size,
+		mos6502->bus->ram_program_size, mos6502->bus->bank_position, mos6502->bus->rom_program_size,
+		KUND, program_start, program_end, KNRM);
+
+	for (unsigned ram_addr = program_start; ram_addr < program_end; ram_addr += 16) {
 		printf("%s%04X%s ", KUND, ram_addr, KNRM);
 		for (unsigned col = 0; col < 16 && ram_addr + col < program_end; col++) 
 			printf("%s%02X%s ", (ram_addr + col == mos6502->PC ? KRED : KWHT), mos6502->bus->ram[ram_addr + col], KNRM);
 		printf("\n");
 	}
 
-	printf("\n%sStack(%04X - %04X)%s:\n", KUND, STACK_START, STACK_END - 1, KNRM);
-	for (unsigned ram_addr = STACK_START; ram_addr < STACK_END; ram_addr += 16) {
+	unsigned stack_start = (STACK_START + mos6502->SP) - 0x32;
+	printf("\n%sStack-part(%04X - %04X)%s:\n", KUND, stack_start, STACK_END, KNRM);
+	for (unsigned ram_addr = stack_start; ram_addr < STACK_END; ram_addr += 16) {
 		printf("%s%04X%s ",KUND, ram_addr, KNRM);
 		for (unsigned col = 0; col < 16 && ram_addr + col < STACK_END; col++) 
 			printf("%s%02X %s", (ram_addr + col == mos6502->SP + STACK_START ? KRED : KWHT), mos6502->bus->ram[ram_addr + col], KNRM);
@@ -48,17 +60,16 @@ void	instruction_cycle(void *p) {
 		}
 		mos6502->opcode = bus->read(ram, mos6502->PC);
 		mos6502->cycles = mos6502->instructions[mos6502->opcode](mos6502);
-		mos6502->PC += 1;
-
+		
 		if (mos6502->PC > PROGRAM_START + bus->ram_program_size
 				&& bus->bank_position < bus->rom_program_size) {
 			memset(ram + PROGRAM_START, 0, bus->ram_program_size);
+			mos6502->PC -= bus->ram_program_size;
 			bus->ram_program_size = bus->rom_program_size - bus->ram_program_size;
 			if (bus->ram_program_size > MAX_PROGRAM_SIZE)
 				bus->ram_program_size = MAX_PROGRAM_SIZE;
 			memcpy(ram + PROGRAM_START, bus->rom + bus->bank_position, bus->ram_program_size);
 			bus->bank_position += bus->ram_program_size;
-			mos6502->PC = PROGRAM_START;
 		}
 
 		if (mos6502->PC > PROGRAM_START + bus->ram_program_size
@@ -67,6 +78,6 @@ void	instruction_cycle(void *p) {
 		}
 
 		print_state(mos6502);
-		usleep(20000);
+		usleep(10);
 	}
 }

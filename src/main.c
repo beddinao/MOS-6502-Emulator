@@ -1,14 +1,11 @@
 #include "mos6502.h"
 
 uint8_t	read_(uint8_t *ram, uint16_t addr) {
-	if (addr >= 0x000 && addr <= RAM_SIZE)
-		return ram[addr];
-	return 0x00;
+	return ram[addr];
 }
 
 void	write_(uint8_t *ram, uint16_t addr, uint8_t val) {
-	if (addr >= 0x0000 && addr <= RAM_SIZE)
-		ram[addr] = val;
+	ram[addr] = val;
 }
 
 void	reset_(_bus *bus){
@@ -58,6 +55,10 @@ uint8_t	load_ROM(_bus *bus, char *filename) {
 		bus->ram_program_size = MAX_PROGRAM_SIZE;
 	memcpy(bus->ram + PROGRAM_START, bus->rom, bus->ram_program_size);
 	bus->bank_position = bus->ram_program_size;
+	/*printf("ram_psize: %u; rom_psize: %u, bank_p: %u\n", 
+		bus->ram_program_size,
+		bus->rom_program_size,
+		bus->bank_position);*/
 	return 1;
 }
 
