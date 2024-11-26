@@ -1,5 +1,5 @@
 #include "mos6502.h"
-#include <unistd.h>
+
 /*
    (uint16_t) opcode
    - (0-4)   opcode & 0xF000 |
@@ -8,41 +8,28 @@
    - (12-16) opcode & 0x000F
 */
 
-void print_state(_6502 *mos6502) {
-	printf("\e[1;1H\e[2J\n");
+/// / //	STACK
 
-	printf("PC: %s%04X%s\nAR: %02X\nXR: %02X\nYR: %02X\nSP: %s%02X%s\nSR: %02X\n",
-	KRED, mos6502->PC, KNRM, mos6502->A, mos6502->X, mos6502->Y, KRED, mos6502->SP, KNRM, mos6502->ST);
-
-	printf("\nopcode: %02X\n", mos6502->opcode);
-
-	unsigned program_start = mos6502->PC - 0xFF;
-	unsigned program_end = mos6502->PC + 0xFF;
-
-	if (program_end > PROGRAM_START + mos6502->bus->ram_program_size)
-		program_end = PROGRAM_START + mos6502->bus->ram_program_size;
-
-	printf("\nROM (%04X-%04X) ROM-size %04X(bank %04X)/%04X,\n%sROM-part (%04X -> %04X)%s:\n",
-		PROGRAM_START, PROGRAM_START + mos6502->bus->ram_program_size,
-		mos6502->bus->ram_program_size, mos6502->bus->bank_position, mos6502->bus->rom_program_size,
-		KUND, program_start, program_end, KNRM);
-
-	for (unsigned ram_addr = program_start; ram_addr < program_end; ram_addr += 16) {
-		printf("%s%04X%s ", KUND, ram_addr, KNRM);
-		for (unsigned col = 0; col < 16 && ram_addr + col < program_end; col++) 
-			printf("%s%02X%s ", (ram_addr + col == mos6502->PC ? KRED : KWHT), mos6502->bus->ram[ram_addr + col], KNRM);
-		printf("\n");
-	}
-
-	unsigned stack_start = (STACK_START + mos6502->SP) - 0x32;
-	printf("\n%sStack-part(%04X - %04X)%s:\n", KUND, stack_start, STACK_END, KNRM);
-	for (unsigned ram_addr = stack_start; ram_addr < STACK_END; ram_addr += 16) {
-		printf("%s%04X%s ",KUND, ram_addr, KNRM);
-		for (unsigned col = 0; col < 16 && ram_addr + col < STACK_END; col++) 
-			printf("%s%02X %s", (ram_addr + col == mos6502->SP + STACK_START ? KRED : KWHT), mos6502->bus->ram[ram_addr + col], KNRM);
-		printf("\n");
-	}
+void	stack_push(_6502 *mos6502, uint8_t val) {
+	if (!mos6502->SP)
+		mos6502->SP = 0xFF;
+	mos6502->SP--;
+	mos6502->bus->write(mos6502->bus->ram, STACK_START + mos6502->SP, val);
 }
+
+uint8_t	stack_pull(_6502 *mos6502) {
+	uint8_t	val = mos6502->bus->read(mos6502->bus->ram, STACK_START + mos6502->SP);
+	// TODO: remove
+	mos6502->bus->write(mos6502->bus->ram, STACK_START + mos6502->SP, 0x0);
+
+	mos6502->SP++;
+	if (mos6502->SP > 0xFF)
+		mos6502->SP = 0x0;
+	return val;
+}
+
+// /////	STATUS
+
 
 
 // /// /	CYCLE
