@@ -8,17 +8,19 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-
-#define ADDRESS_RANGE	0x10000 // 64Kb
+#define ADDR_RANGE		0x10000 // 64Kb - 6502 addressable range
 #define RAM_SIZE		0x0800  // 2KB for RAM
 			        // 0 – 800
 #define STACK_START		0x0100  // 256
 #define STACK_END		0x0200  // 512
-#define PROGRAM_START	0x0800
-#define MAX_PROGRAM_SIZE	0xF800
-#define NMI		0xFFFA  // - FFFB
-#define RESET		0xFFFC  // - FFFD
-#define IRQ_BRK		0xFFFE  // - FFFF
+#define PRGM_START		0x0800  // program start
+#define PRGM_MSIZE		0xF800  // max program size
+#define NMI		0xFFFA  // FFFA - FFFB
+			        // non-maskable interrupt
+#define RSTV		0xFFFC  // FFFC - FFFD
+			        // reset vector
+#define IRQ_BRK		0xFFFE  // FFFE - FFFF
+			        // interrupt request/break
 
 #define RST "\x1B[0m"
 #define RED "\x1B[31m"
@@ -27,14 +29,14 @@
 #define UND "\033[4m"
 
 typedef	struct _bus {
-	uint8_t		ram[ADDRESS_RANGE];
-	uint8_t		rom[ADDRESS_RANGE];
+	uint8_t		ram[ADDR_RANGE];
+	uint8_t		rom[ADDR_RANGE];
+	unsigned		ram_prgm_size;
+	unsigned		rom_prgm_size;
+	unsigned		bank_position;
 	void		(*write)(uint8_t*, uint16_t, uint8_t);
 	uint8_t		(*read)(uint8_t*, uint16_t);
 	void		(*reset)(struct _bus*);
-	unsigned		ram_program_size;
-	unsigned		rom_program_size;
-	unsigned		bank_position;
 }	_bus;
 
 typedef	struct _6502 { 
@@ -46,15 +48,33 @@ typedef	struct _6502 {
 	uint8_t		SR;	// status register
 				// N V - B D I Z C
 	////////////
-	uint8_t		(*instructions[0x100])(struct _6502*);
+	uint8_t		(*opcodes[0x100])(struct _6502*);
+				// opcodes matrix
 	void		(*reset)(struct _6502*);
-	uint8_t		opcode;
-	uint8_t		cycles;
-	_bus		*bus;
+	uint8_t		opcode;	// last fetched opcode
+	uint8_t		cycles;   // last instr. cycles count
+	_bus		*bus;	// BUS Address
 }	_6502;
 
+/* cycle.c */
 void	instruction_cycle(void*);
+
+/* instructions.c */
 void	load_instructions(_6502*);
+
+/* cpu_methods.c */
+void	cpu_load_program(_bus*);
+void	stack_push(_6502*, uint8_t);
+uint8_t	stack_pull(_6502*);
+void	set_flag(_6502*, uint8_t, uint8_t);
+uint8_t	get_flag(_6502*, uint8_t);
+void	cpu_reset(_6502*);
+
+/* bus.c */
+void	bus_reset(_bus*);
+uint8_t	load_ROM(_bus*, char*);
+
+/* print.c */
 void	print_state(_6502*);
 
 #endif

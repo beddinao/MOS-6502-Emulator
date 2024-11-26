@@ -1,37 +1,5 @@
 #include "mos6502.h"
 
-/*
-   (uint16_t) opcode
-   - (0-4)   opcode & 0xF000 |
-   - (4-8)   opcode & 0x0F00 >> 8 |
-   - (8-12)  opcode & 0x00F0 >> 4 |
-   - (12-16) opcode & 0x000F
-*/
-
-/// / //	STACK
-
-void	stack_push(_6502 *mos6502, uint8_t val) {
-	if (!mos6502->SP)
-		mos6502->SP = 0xFF;
-	mos6502->SP--;
-	mos6502->bus->write(mos6502->bus->ram, STACK_START + mos6502->SP, val);
-}
-
-uint8_t	stack_pull(_6502 *mos6502) {
-	uint8_t	val = mos6502->bus->read(mos6502->bus->ram, STACK_START + mos6502->SP);
-	// TODO: remove
-	mos6502->bus->write(mos6502->bus->ram, STACK_START + mos6502->SP, 0x0);
-
-	mos6502->SP++;
-	if (mos6502->SP > 0xFF)
-		mos6502->SP = 0x0;
-	return val;
-}
-
-// /////	STATUS
-
-
-
 // /// /	CYCLE
 
 void	instruction_cycle(void *p) {
@@ -46,25 +14,20 @@ void	instruction_cycle(void *p) {
 			continue;
 		}
 		mos6502->opcode = bus->read(ram, mos6502->PC);
-		mos6502->cycles = mos6502->instructions[mos6502->opcode](mos6502);
+		mos6502->cycles = mos6502->opcodes[mos6502->opcode](mos6502);
 		
-		if (mos6502->PC > PROGRAM_START + bus->ram_program_size
-				&& bus->bank_position < bus->rom_program_size) {
-			memset(ram + PROGRAM_START, 0, bus->ram_program_size);
-			mos6502->PC -= bus->ram_program_size;
-			bus->ram_program_size = bus->rom_program_size - bus->ram_program_size;
-			if (bus->ram_program_size > MAX_PROGRAM_SIZE)
-				bus->ram_program_size = MAX_PROGRAM_SIZE;
-			memcpy(ram + PROGRAM_START, bus->rom + bus->bank_position, bus->ram_program_size);
-			bus->bank_position += bus->ram_program_size;
+		if (mos6502->PC > PRGM_START + bus->ram_prgm_size
+				&& bus->bank_position < bus->rom_prgm_size) {
+			memset(ram + PRGM_START, 0, bus->ram_prgm_size);
+			mos6502->PC -= bus->ram_prgm_size;
+			cpu_load_program(bus);
 		}
 
-		if (mos6502->PC > PROGRAM_START + bus->ram_program_size
-				|| mos6502->PC < PROGRAM_START) {
+		if (mos6502->PC > PRGM_START + bus->ram_prgm_size
+				|| mos6502->PC < PRGM_START)
 			break;
-		}
 
 		print_state(mos6502);
-		usleep(10);
+		usleep(50000);
 	}
 }
