@@ -2,11 +2,14 @@
 
 void	print_state(_6502 *mos6502) {
 	unsigned program_start, program_end,
-	         stack_start;
+	         stack_start, i_flag = mos6502->get_flag(mos6502, 'I');
 
 	printf("\e[1;1H\e[2J\n");
-	printf("PC: %s%04X%s\nAR: %02X\nXR: %02X\nYR: %02X\nSP: %s%02X%s\nSR: %02X\n",
-	RED, mos6502->PC, RST, mos6502->A, mos6502->X, mos6502->Y, RED, mos6502->SP, RST, mos6502->SR);
+	printf("PC: %s%04X%s\nAR: %02X\nXR: %02X\nYR: %02X\nSP: %s%02X%s\n",
+	RED, mos6502->PC, RST, mos6502->A, mos6502->X, mos6502->Y, RED, mos6502->SP, RST);
+	printf("SR: %s%i %i %i %i %i %i %i %i%s\n    N V - B D I Z C\n", WHT, mos6502->get_flag(mos6502, 'N'), mos6502->get_flag(mos6502, 'V'),
+		0, mos6502->get_flag(mos6502, 'B'), mos6502->get_flag(mos6502, 'D'), i_flag,
+		mos6502->get_flag(mos6502, 'Z'), mos6502->get_flag(mos6502, 'C'), RST);
 	printf("\nopcode: %02X\n", mos6502->opcode);
 	program_start = mos6502->PC - 0xFF;
 	program_end = mos6502->PC + 0xFF;

@@ -3,14 +3,20 @@
 // /// /	INSTRUCTIONS	
 
 /*
-	BRK
+	BRK - op0x00
 	IMPLIED
 	1 Byte, 7 Cycles
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
 	//printf("BRK IMP\n");
-	//
-	mos6502->PC += 1;
+	mos6502->PC += 2;
+	mos6502->push(mos6502, mos6502->PC >> 8);
+	mos6502->push(mos6502, mos6502->PC & 0x00FF);
+	mos6502->set_flag(mos6502, 'B', 1);
+	mos6502->push(mos6502, mos6502->SR);
+	mos6502->set_flag(mos6502, 'I', 1);
+	mos6502->PC = mos6502->bus->read(mos6502->bus->ram, RSTV) << 8 |
+		mos6502->bus->read(mos6502->bus->ram, RSTV+1);
 	return 7;
 }
 
@@ -49,12 +55,15 @@ uint8_t	ASL_ZP(_6502* mos6502) {
 }
 
 /*
-	PHP
+	PHP - op0x08
 	IMPLIED
 	1 Byte, 3 Cycles
 */
 uint8_t	PHP_IMP(_6502 *mos6502) {
 	//printf("PHP_IMP\n");
+	mos6502->set_flag(mos6502, 'B', 1);
+	mos6502->set_flag(mos6502, 'F', 1);
+	mos6502->push(mos6502, mos6502->SR);
 	mos6502->PC += 1;
 	return 3;
 }
@@ -148,13 +157,14 @@ uint8_t	ASL_ZPX(_6502* mos6502) {
 }
 
 /*
-	CLC
+	CLC - op0x18
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	CLC_IMP(_6502 *mos6502) {
 	//printf("CLC_IMP\n");
-	mos6502->PC += 2;
+	mos6502->set_flag(mos6502, 'C', 0);
+	mos6502->PC += 1;
 	return 2;
 }
 
@@ -247,12 +257,13 @@ uint8_t	ROL_ZP(_6502 *mos6502) {
 }
 
 /*
-	PLP
+	PLP - op0x28
 	IMPLIED
 	1 Byte, 4 Cycles
 */
 uint8_t	PLP_IMP(_6502 *mos6502) {
 	//printf("PLP_IMP\n");
+	mos6502->SR = mos6502->pull(mos6502);
 	mos6502->PC += 1;
 	return 4;
 }
@@ -357,12 +368,13 @@ uint8_t	ROL_ZPX(_6502 *mos6502) {
 }
 
 /*
-	SEC
+	SEC - op0x38
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	SEC_IMP(_6502 *mos6502) {
 	//printf("SEC_IMP\n");
+	mos6502->set_flag(mos6502, 'C', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -401,13 +413,16 @@ uint8_t	ROL_ABSX(_6502 *mos6502) {
 }
 
 /*
-	RTI
+	RTI - op0x40
 	IMPLIED
 	1 Byte, 6 Cycles
 */
 uint8_t	RTI_IMP(_6502 *mos6502) {
 	//printf("RTI_IMP\n");
-	mos6502->PC += 1;
+	mos6502->SR = mos6502->pull(mos6502);
+	uint8_t	low_byte = mos6502->pull(mos6502);
+	mos6502->PC = mos6502->pull(mos6502) << 8 | low_byte;
+	//mos6502->PC += 1;
 	return 6;
 }
 
@@ -445,13 +460,13 @@ uint8_t	LSR_ZP(_6502 *mos6502) {
 }
 
 /*
-	PHA
+	PHA - op0x48
 	IMPLIED
 	1 Byte, 3 Cycles
 */
 uint8_t	PHA_IMP(_6502 *mos6502) {
 	//printf("PHA_IMP\n");
-	
+	mos6502->push(mos6502, mos6502->A);
 	mos6502->PC += 1;
 	return 3;
 }
@@ -556,12 +571,13 @@ uint8_t	LSR_ZPX(_6502 *mos6502) {
 }
 
 /*
-	CLI
+	CLI - op0x58
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	CLI_IMP(_6502 *mos6502) {
 	//printf("CLI_IMP\n");
+	mos6502->set_flag(mos6502, 'I', 0);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -600,12 +616,14 @@ uint8_t	LSR_ABSX(_6502 *mos6502) {
 }
 
 /*
-	RTS
+	RTS - op0x60
 	IMPLIED
 	1 Byte, 6 Cycles
 */
 uint8_t	RTS_IMP(_6502 *mos6502) {
 	//printf("RTS_IMP\n");
+	uint8_t low_byte = mos6502->pull(mos6502);
+	mos6502->PC = mos6502->pull(mos6502) << 8 | low_byte;
 	mos6502->PC += 1;
 	return 6;
 }
@@ -644,12 +662,15 @@ uint8_t	ROR_ZP(_6502 *mos6502) {
 }
 
 /*
-	PLA
+	PLA - op0x68
 	IMPLIED
 	1 Byte, 4 Cycles
 */
 uint8_t	PLA_IMP(_6502 *mos6502) {
 	//printf("PLA_IMP\n");
+	mos6502->A = mos6502->pull(mos6502);
+	if (!mos6502->A) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->A >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 4;
 }
@@ -754,12 +775,13 @@ uint8_t	ROR_ZPX(_6502 *mos6502) {
 }
 
 /*
-	SEI
+	SEI - op0x78
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	SEI_IMP(_6502 *mos6502) {
 	//printf("SEI_IMP\n");
+	mos6502->set_flag(mos6502, 'I', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -842,23 +864,31 @@ uint8_t	STX_ZP(_6502 *mos6502) {
 }
 
 /*
-	DEY
+	DEY - op0x88
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	DEY_IMP(_6502* mos6502) {
 	//printf("DEY_IMP\n");
+	mos6502->Y -= 1;
+	if (!mos6502->Y) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->Y >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
 
 /*
-	TXA
+	TXA - op0x8A
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	TXA_IMP(_6502 *mos6502) {
 	//printf("TXA_IMP\n");
+	mos6502->A = mos6502->X;
+	if (!mos6502->A)
+		mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->A >> 0x7) & 0x1)
+		mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -952,12 +982,15 @@ uint8_t	STX_ZPY(_6502 *mos6502) {
 }
 
 /*
-	TYA
+	TYA - op0x98
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	TYA_IMP(_6502 *mos6502) {
 	//printf("TYA_IMP\n");
+	mos6502->A = mos6502->Y;
+	if (!mos6502->A) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->A >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -974,12 +1007,15 @@ uint8_t	STA_ABSY(_6502 *mos6502) {
 }
 
 /*
-	TXS
+	TXS - op0x9A
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	TXS_IMP(_6502 *mos6502) {
 	//printf("TXS_IMP\n");
+	mos6502->SP = mos6502->X;
+	if (!mos6502->SP) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->SP >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1062,12 +1098,15 @@ uint8_t	LDX_ZP(_6502 *mos6502) {
 }
 
 /*
-	TAY
+	TAY - op0xA8
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	TAY_IMP(_6502 *mos6502) {
 	//printf("TAY_IMP\n");
+	mos6502->Y = mos6502->A;
+	if (!mos6502->Y) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->Y >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1084,12 +1123,15 @@ uint8_t	LDA_IMM(_6502 *mos6502) {
 }
 
 /*
-	TAX
+	TAX - op0xAA
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	TAX_IMP(_6502 *mos6502) {
 	//printf("TAX_IMP\n");
+	mos6502->X = mos6502->A;
+	if (!mos6502->X) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->X >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1183,12 +1225,13 @@ uint8_t	LDX_ZPY(_6502 *mos6502) {
 }
 
 /*
-	CLV
+	CLV - op0xB8
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	CLV_IMP(_6502 *mos6502) {
 	//printf("CLV_IMP\n");
+	mos6502->set_flag(mos6502, 'V', 0);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1205,12 +1248,15 @@ uint8_t	LDA_ABSY(_6502 *mos6502) {
 }
 
 /*
-	TSX
+	TSX - op0xBA
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	TSX_IMP(_6502 *mos6502) {
 	//printf("TSX_IMP\n");
+	mos6502->X = mos6502->SP;
+	if (!mos6502->X) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->X >> 7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1304,12 +1350,15 @@ uint8_t	DEC_ZP(_6502 *mos6502) {
 }
 
 /*
-	INY
+	INY - op0xC8
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	INY_IMP(_6502 *mos6502) {
 	//printf("INY_IMP\n");
+	mos6502->Y += 1;
+	if (!mos6502->Y) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->Y >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1326,12 +1375,15 @@ uint8_t	CMP_IMM(_6502 *mos6502) {
 }
 
 /*
-	DEX
+	DEX - op0xCA
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	DEX_IMP(_6502 *mos6502) {
 	//printf("DEX_IMP\n");
+	mos6502->X -= 1;
+	if (!mos6502->X) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->X >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1414,12 +1466,13 @@ uint8_t	DEC_ZPX(_6502 *mos6502) {
 }
 
 /*
-	CLD
+	CLD - op0xD8
 	IMPLIED
 	1 Bytes, 2 Cycles
 */
 uint8_t	CLD_IMP(_6502 *mos6502) {
 	//printf("CLD_IMP\n");
+	mos6502->set_flag(mos6502, 'D', 0);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1513,12 +1566,15 @@ uint8_t	INC_ZP(_6502 *mos6502) {
 }
 
 /*
-	INX
+	INX - op0xE8
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	INX_IMP(_6502 *mos6502) {
 	//printf("INX_IMP\n");
+	mos6502->X += 1;
+	if (!mos6502->X) mos6502->set_flag(mos6502, 'Z', 1);
+	if ((mos6502->X >> 0x7) & 0x1) mos6502->set_flag(mos6502, 'N', 1);
 	mos6502->PC += 1;
 	return 2;
 }
@@ -1535,7 +1591,7 @@ uint8_t	SBC_IMM(_6502 *mos6502) {
 }
 
 /*
-	NOP
+	NOP - op0xEA
 	IMPLIED
 	1 Byte, 2 Cycles
 */
@@ -1623,12 +1679,13 @@ uint8_t	INC_ZPX(_6502 *mos6502) {
 }
 
 /*
-	SED
+	SED - op0xF8
 	IMPLIED
 	1 Byte, 2 Cycles
 */
 uint8_t	SED_IMP(_6502 *mos6502) {
 	//printf("SED_IMP\n");
+	mos6502->set_flag(mos6502, 'D', 1);
 	mos6502->PC += 1;
 	return 2;
 }

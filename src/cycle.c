@@ -28,6 +28,6 @@ void	instruction_cycle(void *p) {
 			break;
 
 		print_state(mos6502);
-		usleep(100000);
+		usleep(30000);
 	}
 }

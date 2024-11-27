@@ -42,6 +42,9 @@ void	set_flag(_6502 *mos6502, uint8_t pos, uint8_t bit) {
 		case 'I':	bit ? (sr|=0x4) : (sr^=0x4); break;
 		case 'Z':	bit ? (sr|=0x2) : (sr^=0x2); break;
 		case 'C':	bit ? (sr|=0x1) : (sr^=0x1); break;
+		default: bit ? (sr|0x20) : (sr^=0x20); break;
+		         // who knows what that 5th bit
+		         // can do
 	}
 	mos6502->SR = sr;
 }
@@ -56,7 +59,7 @@ uint8_t	get_flag(_6502* mos6502, uint8_t pos) {
 		case 'I': return (sr >> 0x2) & 0x1;
 		case 'Z': return (sr >> 0x1) & 0x1;
 		case 'C': return sr & 0x1;
-		default:	return 0x0;
+		default:	return (sr >> 0x5) & 0x1;
 	}
 }
 
