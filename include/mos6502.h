@@ -21,7 +21,7 @@
 			        // reset vector
 #define IRQ_BRK		0xFFFE  // FFFE - FFFF
 			        // interrupt request/break
-
+// ANSI codes
 #define RST "\x1B[0m"
 #define RED "\x1B[31m"
 #define BLU "\x1B[34m"
@@ -36,6 +36,7 @@ typedef	struct _bus {
 	unsigned		bank_position;
 	void		(*write)(uint8_t*, uint16_t, uint8_t);
 	uint8_t		(*read)(uint8_t*, uint16_t);
+	uint8_t		(*load_ROM)(struct _bus*, char*);
 	void		(*reset)(struct _bus*);
 }	_bus;
 
@@ -50,7 +51,15 @@ typedef	struct _6502 {
 	////////////
 	uint8_t		(*opcodes[0x100])(struct _6502*);
 				// opcodes matrix
+	void		(*load_ROM)(_bus*);
+	uint8_t		(*pull)(struct _6502*);
+	void		(*push)(struct _6502*, uint8_t);
+	void		(*set_flag)(struct _6502*, uint8_t, uint8_t);
+	uint8_t		(*get_flag)(struct _6502*, uint8_t);
 	void		(*reset)(struct _6502*);
+	void		(*instruction_cycle)(void*);
+				// fetch-decode-execute
+
 	uint8_t		opcode;	// last fetched opcode
 	uint8_t		cycles;   // last instr. cycles count
 	_bus		*bus;	// BUS Address
@@ -63,16 +72,10 @@ void	instruction_cycle(void*);
 void	load_instructions(_6502*);
 
 /* cpu_methods.c */
-void	cpu_load_program(_bus*);
-void	stack_push(_6502*, uint8_t);
-uint8_t	stack_pull(_6502*);
-void	set_flag(_6502*, uint8_t, uint8_t);
-uint8_t	get_flag(_6502*, uint8_t);
-void	cpu_reset(_6502*);
+void	cpu_init(_6502*);
 
 /* bus.c */
-void	bus_reset(_bus*);
-uint8_t	load_ROM(_bus*, char*);
+void	bus_init(_bus*);
 
 /* print.c */
 void	print_state(_6502*);

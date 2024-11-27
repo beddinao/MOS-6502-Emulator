@@ -62,9 +62,16 @@ uint8_t	get_flag(_6502* mos6502, uint8_t pos) {
 
 /// // /	RESET
 
-void	cpu_reset(_6502* mos6502) {
+void	cpu_init(_6502* mos6502) {
 	_bus *bus = mos6502->bus;
 	uint8_t *ram = bus->ram;
+	mos6502->load_ROM = cpu_load_program;
+	mos6502->pull = stack_pull;
+	mos6502->push = stack_push;
+	mos6502->set_flag = set_flag;
+	mos6502->get_flag = get_flag;
+	load_instructions(mos6502);
+	mos6502->instruction_cycle = instruction_cycle;
 	mos6502->PC = bus->read(ram, RSTV) << 8 |
 		bus->read(ram, RSTV+1);
 	mos6502->opcode = 0x0;

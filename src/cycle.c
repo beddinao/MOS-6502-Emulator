@@ -20,7 +20,7 @@ void	instruction_cycle(void *p) {
 				&& bus->bank_position < bus->rom_prgm_size) {
 			memset(ram + PRGM_START, 0, bus->ram_prgm_size);
 			mos6502->PC -= bus->ram_prgm_size;
-			cpu_load_program(bus);
+			mos6502->load_ROM(bus);
 		}
 
 		if (mos6502->PC > PRGM_START + bus->ram_prgm_size
@@ -28,6 +28,6 @@ void	instruction_cycle(void *p) {
 			break;
 
 		print_state(mos6502);
-		usleep(50000);
+		usleep(100000);
 	}
 }

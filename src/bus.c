@@ -8,18 +8,6 @@ void	write_(uint8_t *ram, uint16_t addr, uint8_t val) {
 	ram[addr] = val;
 }
 
-void	bus_reset(_bus *bus) {
-	memset(bus->ram, 0, sizeof(bus->ram));
-	memset(bus->rom, 0, sizeof(bus->rom));
-	bus->ram_prgm_size = 0;
-	bus->rom_prgm_size = 0;
-	bus->bank_position = 0;
-	bus->read = read_;
-	bus->write = write_;
-	bus->ram[RSTV] = PRGM_START >> 8;
-	bus->ram[RSTV+1] = PRGM_START & 0x00FF;
-}
-
 uint8_t	load_ROM(_bus *bus, char *filename) {
 	unsigned char buffer[PRGM_MSIZE];
 	unsigned chars_read;
@@ -44,3 +32,17 @@ uint8_t	load_ROM(_bus *bus, char *filename) {
 
 	return 1;
 }
+
+void	bus_init(_bus *bus) {
+	memset(bus->ram, 0, sizeof(bus->ram));
+	memset(bus->rom, 0, sizeof(bus->rom));
+	bus->ram_prgm_size = 0;
+	bus->rom_prgm_size = 0;
+	bus->bank_position = 0;
+	bus->read = read_;
+	bus->write = write_;
+	bus->load_ROM = load_ROM;
+	bus->ram[RSTV] = PRGM_START >> 8;
+	bus->ram[RSTV+1] = PRGM_START & 0x00FF;
+}
+
