@@ -9,7 +9,7 @@
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
 	//printf("BRK IMP\n");
-
+	//
 	mos6502->PC += 1;
 	return 7;
 }
@@ -451,6 +451,7 @@ uint8_t	LSR_ZP(_6502 *mos6502) {
 */
 uint8_t	PHA_IMP(_6502 *mos6502) {
 	//printf("PHA_IMP\n");
+	
 	mos6502->PC += 1;
 	return 3;
 }

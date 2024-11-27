@@ -81,4 +81,6 @@ void	cpu_init(_6502* mos6502) {
 	mos6502->A = 0x0;
 	mos6502->X = 0x0;
 	mos6502->Y = 0x0;
+	mos6502->set_flag(mos6502, 'I', 1);
+	mos6502->set_flag(mos6502, 'B', 1);
 }

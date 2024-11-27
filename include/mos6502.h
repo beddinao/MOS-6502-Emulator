@@ -14,7 +14,9 @@
 #define STACK_START		0x0100  // 256
 #define STACK_END		0x0200  // 512
 #define PRGM_START		0x0800  // program start
-#define PRGM_MSIZE		0xF800  // max program size
+#define PRGM_MSIZE		0xF7FA  // max program size:
+			        // ADDR_RANGE - PRGM_START -
+			        // 6 (interrupt vectors)
 #define NMI		0xFFFA  // FFFA - FFFB
 			        // non-maskable interrupt
 #define RSTV		0xFFFC  // FFFC - FFFD
@@ -33,7 +35,7 @@ typedef	struct _bus {
 	uint8_t		rom[ADDR_RANGE];
 	unsigned		ram_prgm_size;
 	unsigned		rom_prgm_size;
-	unsigned		bank_position;
+	unsigned		bank_position; 
 	void		(*write)(uint8_t*, uint16_t, uint8_t);
 	uint8_t		(*read)(uint8_t*, uint16_t);
 	uint8_t		(*load_ROM)(struct _bus*, char*);
@@ -50,7 +52,7 @@ typedef	struct _6502 {
 				// N V - B D I Z C
 	////////////
 	uint8_t		(*opcodes[0x100])(struct _6502*);
-				// opcodes matrix
+				// FxF opcodes matrix
 	void		(*load_ROM)(_bus*);
 	uint8_t		(*pull)(struct _6502*);
 	void		(*push)(struct _6502*, uint8_t);
