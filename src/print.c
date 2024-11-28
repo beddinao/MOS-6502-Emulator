@@ -5,7 +5,7 @@ void	print_state(_6502 *mos6502) {
 	         stack_start, i_flag = mos6502->get_flag(mos6502, 'I');
 
 	printf("\e[1;1H\e[2J\n");
-	printf("PC: %s%04X%s\nAR: %02X\nXR: %02X\nYR: %02X\nSP: %s%02X%s\n",
+	printf("PC: %s%04X%s\nA: %02X\nX: %02X\nY: %02X\nSP: %s%02X%s\n",
 	RED, mos6502->PC, RST, mos6502->A, mos6502->X, mos6502->Y, RED, mos6502->SP, RST);
 	printf("SR: %s%i %i %i %i %i %i %i %i%s\n    N V - B D I Z C\n", WHT, mos6502->get_flag(mos6502, 'N'), mos6502->get_flag(mos6502, 'V'),
 		0, mos6502->get_flag(mos6502, 'B'), mos6502->get_flag(mos6502, 'D'), i_flag,

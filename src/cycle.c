@@ -27,7 +27,7 @@ void	instruction_cycle(void *p) {
 				|| mos6502->PC < PRGM_START)
 			break;
 
-		print_state(mos6502);
+		//print_state(mos6502);
 		usleep(30000);
 	}
 }
