@@ -34,3 +34,5 @@ void	print_state(_6502 *mos6502) {
 		printf("\n");
 	}
 }
+
+

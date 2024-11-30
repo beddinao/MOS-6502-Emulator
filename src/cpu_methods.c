@@ -11,6 +11,7 @@ void	cpu_load_program(_bus *bus) {
 }
 
 /// / //	STACK
+// >>>>low(00FF)>>>high(FF00)>>>> 
 
 void	stack_push(_6502 *mos6502, uint8_t val) {
 	if (!mos6502->SP)

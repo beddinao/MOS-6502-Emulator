@@ -23,11 +23,13 @@ void	instruction_cycle(void *p) {
 			mos6502->load_ROM(bus);
 		}
 
-		if (mos6502->PC > PRGM_START + bus->ram_prgm_size
-				|| mos6502->PC < PRGM_START)
+		/*if (mos6502->PC > PRGM_START + bus->ram_prgm_size
+				|| mos6502->PC < PRGM_START) {
+			printf("break for boundaries\n");
 			break;
+		}*/
 
 		print_state(mos6502);
-		usleep(70000);
+		//usleep(70000);
 	}
 }
