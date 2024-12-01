@@ -79,7 +79,4 @@ void	cpu_init(_6502*);
 /* bus.c */
 void	bus_init(_bus*);
 
-/* print.c */
-void	print_state(_6502*);
-
 #endif
