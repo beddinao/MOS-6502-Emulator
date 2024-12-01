@@ -6,7 +6,7 @@
 
 
 ## about
-This is a simple 6502 CPU emulator that fully supports all instructions, addressing modes, and cycle accuracy.<br>
+simple 6502 CPU emulator written in C that fully supports all instructions, addressing modes, and cycle accuracy.<br>
 The 6502 is a classic 8-bit microprocessor used in early computers, game consoles, and devices like the Apple II and NES.<br>
 
 ## features
