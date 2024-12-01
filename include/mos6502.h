@@ -7,6 +7,9 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <pthread.h>
+#include <curses.h>
+#include <signal.h>
 
 #define ADDR_RANGE		0x10000 // 64Kb - 6502 addressable range
 #define RAM_SIZE		0x0800  // 2KB for RAM
@@ -23,6 +26,7 @@
 			        // reset vector
 #define IRQ_BRK		0xFFFE  // FFFE - FFFF
 			        // interrupt request/break
+#define FRAME_RATE		0x186A0 // 0.1 seconds
 // ANSI codes
 #define RST "\x1B[0m"
 #define RED "\x1B[31m"
@@ -67,6 +71,16 @@ typedef	struct _6502 {
 	_bus		*bus;	// BUS Address
 }	_6502;
 
+typedef	struct _worker {
+	pthread_t		worker;
+	pthread_mutex_t	halt_mutex;
+	pthread_mutex_t	data_mutex;
+	uint8_t		halt;
+	_6502		*mos6502;
+}	_worker;
+
+_worker	*thread_data;
+
 /* cycle.c */
 void	instruction_cycle(void*);
 
@@ -80,6 +94,6 @@ void	cpu_init(_6502*);
 void	bus_init(_bus*);
 
 /* print.c */
-void	print_state(_6502*);
+void	*print_state(void*);
 
 #endif

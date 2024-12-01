@@ -1192,7 +1192,7 @@ uint8_t	SEI_IMP(_6502 *mos6502) {
 }
 
 /*
-	ADC - op0x79 HoliShit!
+	ADC - op0x79
 	ABSOLUTE Y
 	3 Bytes, 4* Cycles
 */
