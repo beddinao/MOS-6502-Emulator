@@ -1,5 +1,7 @@
 #include "mos6502.h"
 
+_worker	*thread_data;
+
 void	sig_handle(int s) {
 	pthread_mutex_lock(&thread_data->halt_mutex);
 	thread_data->halt = 1;

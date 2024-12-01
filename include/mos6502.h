@@ -79,7 +79,7 @@ typedef	struct _worker {
 	_6502		*mos6502;
 }	_worker;
 
-_worker	*thread_data;
+extern _worker	*thread_data;
 
 /* cycle.c */
 void	instruction_cycle(void*);
