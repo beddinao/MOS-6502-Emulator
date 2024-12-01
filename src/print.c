@@ -44,6 +44,8 @@ void	*print_state(void *p) {
 	start_color();
 	init_pair(1, COLOR_WHITE, COLOR_BLACK);
 	init_pair(2, COLOR_RED, COLOR_BLACK);
+	unsigned	width = COLS / 4,
+		x_start = width / 2;
 	while (1) {
 		y_index = 1;
 		pthread_mutex_lock(&thread_data->halt_mutex);
@@ -83,20 +85,20 @@ void	*print_state(void *p) {
 			program_start = PRGM_START;
 			program_end = program_start + 0xFF;
 		}
-		x_index = print_field(0, y_index, PRGM_START, "ROM (", res);
+		x_index = print_field(x_start, y_index, PRGM_START, "ROM (", res);
 		x_index = print_field(x_index, y_index, PRGM_START + mos6502->bus->ram_prgm_size, "-", res);
 		x_index = print_field(x_index, y_index, mos6502->bus->ram_prgm_size, ") ROM-size ", res);
 		x_index = print_field(x_index, y_index, mos6502->bus->bank_position, "(bank ", res);
 		x_index = print_field(x_index, y_index, mos6502->bus->rom_prgm_size, ")/", res);
 		mvaddstr(y_index++, x_index, ",");
-		x_index = print_field(0, y_index, program_start, "ROM-part (", res);
+		x_index = print_field(x_start, y_index, program_start, "ROM-part (", res);
 		x_index = print_field(x_index, y_index, program_end, " -> ", res);
 		mvaddstr(y_index++, x_index, "):");
 		/// / //	ROM DUMP
-		for (unsigned ram_addr = program_start, color_mode = 1; ram_addr < program_end; ram_addr += 16) {
-			x_index = print_field(0, y_index, ram_addr, "", res);
+		for (unsigned ram_addr = program_start, color_mode = 1; ram_addr < program_end; ram_addr += width) {
+			x_index = print_field(x_start, y_index, ram_addr, "", res);
 			mvaddstr(y_index, x_index++, ":");
-			for (unsigned col = 0; col < 16 && ram_addr + col < program_end; col++) {
+			for (unsigned col = 0; col < width && ram_addr + col < program_end; col++) {
 				color_mode = (ram_addr + col == mos6502->PC) ? 2 : 1;
 				attron(COLOR_PAIR(color_mode));
 				x_index = print_field(x_index, y_index, mos6502->bus->ram[ram_addr + col], " ", res);
@@ -107,14 +109,14 @@ void	*print_state(void *p) {
 		y_index++;
 		// /// /	STACK HEADER
 		stack_start = (STACK_START + mos6502->SP) - 0x32;
-		x_index = print_field(0, y_index, stack_start, "Stack-part(", res);
+		x_index = print_field(x_start, y_index, stack_start, "Stack-part(", res);
 		x_index = print_field(x_index, y_index, STACK_END, " - ", res);
 		mvaddstr(y_index++, x_index, "):");
 		/// / //	STACK DUMP
-		for (unsigned ram_addr = stack_start, color_mode = 1; ram_addr < STACK_END; ram_addr += 16) {
-			x_index = print_field(0, y_index, ram_addr, "", res);
+		for (unsigned ram_addr = stack_start, color_mode = 1; ram_addr < STACK_END; ram_addr += width) {
+			x_index = print_field(x_start, y_index, ram_addr, "", res);
 			mvaddstr(y_index, x_index++, ":");
-			for (unsigned col = 0; col < 16 && ram_addr + col < STACK_END; col++) {
+			for (unsigned col = 0; col < width && ram_addr + col < STACK_END; col++) {
 				color_mode = (ram_addr + col == mos6502->SP + STACK_START) ? 2 : 1;
 				attron(COLOR_PAIR(color_mode));
 				x_index = print_field(x_index, y_index, mos6502->bus->ram[ram_addr + col], " ", res);
