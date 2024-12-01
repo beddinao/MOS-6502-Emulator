@@ -8,12 +8,11 @@
 ## about
 This is a simple 6502 CPU emulator that fully supports all instructions, addressing modes, and cycle accuracy.<br>
 The 6502 is a classic 8-bit microprocessor used in early computers, game consoles, and devices like the Apple II and NES.<br>
-This emulator is designed to run test programs and demonstrate how the 6502 operates.
 
 ## features
-This emulator uses a jump-table design written in C,<br>
+This emulator uses a jump-table design,<br>
 where the opcode value (e.g., 0x80) directly indexes a function pointer table.<br>
-Each entry in the table points to a C function that replicates the behavior of the corresponding 6502 instruction.
+Each entry in the table points to a function that replicates the behavior of the corresponding 6502 instruction.
 
 all the 13 addressing modes are emulated:
 
@@ -41,7 +40,7 @@ such as modifying multiple registers or combining valid opcodes.<br>
 Illegal opcodes are currently unimplemented, and executing them results in a simple NOP.
 
 ## main loop
-the classic fetch-decode-execute cycle:
+classic fetch-decode-execute cycle:
 ```
 while (1)
 {
@@ -52,7 +51,7 @@ while (1)
   mos6502->cycles = mos6502->opcodes[mos6502->opcode](mos6502);
 }
 ```
-- Fetch: The next opcode is retrieved from memory using the program counter (PC).
+- Fetch: The next opcode is retrieved from memory at the program counter (PC).
 - Decode: The opcode is used as an index in the opcode table (function pointer array).
 - Execute: The indexed function is called, performing the 6502 instruction and returning the number of cycles it takes.
 
@@ -67,7 +66,7 @@ such as the Commodore 64, NES, Atari, or Apple II.<br>
 typedef	struct _bus {
   uint8_t     ram[ADDR_RANGE];
   uint8_t     rom[ADDR_RANGE];
-  // banking logic .. 
+  // bank switching logic .. 
   // methods ..
   // other devices ..
 }	_bus;
@@ -80,6 +79,18 @@ allowing for real-time observation of the CPU behavior
 <div align="center">
   <img align="center" src="./images/screen_record.gif" />
 </div>
+
+```
+• PC.
+• Accumulator (A).
+• Index registers (X/A).
+• Stack pointer (SP).
+• Status register 8-bit (each bit represents a flag).
+• last executed opcode.
+• Memory dumps:
+  • PC surrounding area: hex dump of memory from PC - 0xFF to PC + 0xFF.
+  • SP Surrounding Area: Displays memory from SP - 0x32 to a fixed address (0x200).
+```
 
 ## upcoming features
 - 100% Cycles accuracy
