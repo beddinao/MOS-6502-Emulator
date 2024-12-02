@@ -7,7 +7,6 @@ void	instruction_cycle(void *p) {
 	_6502	*mos6502 = thread_data->mos6502;
 	_bus	*bus = mos6502->bus;
 	uint8_t	*ram = bus->ram;
-	unsigned	print_counter = 0;
 
 	while (1) {
 		if (mos6502->cycles) {

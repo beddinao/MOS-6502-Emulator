@@ -35,7 +35,6 @@ unsigned	print_field(unsigned x, unsigned y, unsigned num, char *str, char *res)
 void	*print_state(void *p) {
 	_worker	*thread_data = (_worker*)p;
 	_6502	*mos6502 = thread_data->mos6502;
-	_bus	*bus = mos6502->bus;
 	unsigned	program_start, program_end, stack_start;
 	char	res[1024];
 	unsigned	x_index, y_index;

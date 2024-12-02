@@ -1049,7 +1049,7 @@ uint8_t	JMP_IND(_6502 *mos6502) {
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	addr = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
-	mos6502->PC = addr & 0x00FF | addr >> 0x8;
+	mos6502->PC = (addr & 0x00FF) | (addr >> 0x8);
 	return 5;
 }
 
