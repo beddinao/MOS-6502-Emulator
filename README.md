@@ -95,3 +95,4 @@ allowing for real-time observation of the CPU behavior
 ## upcoming features
 - 100% Cycles accuracy
 - illegal opcodes implementation
+- decimal mode support (not crucial for NES emulation)
