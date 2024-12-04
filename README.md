@@ -5,7 +5,6 @@
 </div>
 
 
-## about
 simple <a href="https://en.wikipedia.org/wiki/MOS_Technology_6502">6502 CPU </a>emulator written in C that fully supports all instructions, addressing modes, and cycle accuracy.<br>
 The 6502 along with its various derivatives powered the <a href="https://en.wikipedia.org/wiki/Commodore_64">Commodore 64</a>, <a href="https://en.wikipedia.org/wiki/Nintendo_Entertainment_System">Nintendo Entertainment System (NES)</a>, Apple II, BBC Micro ..<br>
 
