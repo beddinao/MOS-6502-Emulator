@@ -96,4 +96,6 @@ void	bus_init(_bus*);
 /* print.c */
 void	*print_state(void*);
 
+/* main.c */
+void	sig_handle(int);
 #endif

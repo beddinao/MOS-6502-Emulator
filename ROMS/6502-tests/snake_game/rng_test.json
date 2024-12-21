@@ -1,0 +1,20 @@
+{
+	"configName": "Easy6502 Javascript Emulator Machine",
+	"startAddress": 1536,
+	"displayType": "easy6502JsClone",
+	"devices": [
+		{
+			"type":"RngDev",
+			"instanceName": "RNG Register",
+			"startAddress": 254,
+			"size": 1
+		},
+		{
+			"type": "ROM",
+			"instanceName": "Program ROM",
+			"startAddress": 1536,
+			"romFilename": "rng_test.bin"
+		}
+	] 
+}
+

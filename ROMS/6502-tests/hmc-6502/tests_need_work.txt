@@ -1,0 +1,7 @@
+test06 : looks like it didn't execute anything
+test07 : f037 has different SR value now
+test08 : gets farther into ROM?  verify output still OK
+test12 : bkpt flag
+test13 : special flags all different
+
+
