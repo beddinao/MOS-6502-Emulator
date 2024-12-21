@@ -8,15 +8,21 @@
 	1 Byte, 7 Cycles
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
-	mos6502->PC += 2;
+	mos6502->PC++;
+	uint8_t	intr_addr = mos6502->bus->read(mos6502->bus->ram, IRQ_BRK) << 8 |
+		mos6502->bus->read(mos6502->bus->ram, IRQ_BRK + 1);
 	// high_byte first
 	mos6502->push(mos6502, mos6502->PC >> 8);
 	mos6502->push(mos6502, mos6502->PC & 0x00FF);
 	mos6502->set_flag(mos6502, 'B', 1);
 	mos6502->push(mos6502, mos6502->SR);
 	mos6502->set_flag(mos6502, 'I', 1);
-	mos6502->PC = mos6502->bus->read(mos6502->bus->ram, RSTV) << 8 |
-		mos6502->bus->read(mos6502->bus->ram, RSTV+1);
+	// software interrupt is program responsiblity
+	if (intr_addr == 0) {
+		return 0;
+	}
+
+	mos6502->PC = intr_addr;
 	return 7;
 }
 
@@ -1123,7 +1129,7 @@ uint8_t	SEI_IMP(_6502 *mos6502) {
 }
 
 /*
-	ADC - op0x79 HoliShit!
+	ADC - op0x79
 	ABSOLUTE Y
 	3 Bytes, 4* Cycles
 */
@@ -2040,7 +2046,7 @@ uint8_t	CLD_IMP(_6502 *mos6502) {
 /*
 	CMP - op0xD9
 	ABSOLUTE Y
-	2 Bytes, 4* Cycles
+	3 Bytes, 4* Cycles
 */
 uint8_t	CMP_ABSY(_6502 *mos6502) {
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
@@ -2052,14 +2058,14 @@ uint8_t	CMP_ABSY(_6502 *mos6502) {
 	mos6502->set_flag(mos6502, 'C', mos6502->A >= operand);
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == operand);
 	mos6502->set_flag(mos6502, 'N', res & 0x80);
-	mos6502->PC += 2;
+	mos6502->PC += 3;
 	return cycles;
 }
 
 /*
 	CMP - op0xDD
 	ABSOLUTE X
-	2 Bytes, 4* Cycles
+	3 Bytes, 4* Cycles
 */
 uint8_t	CMP_ABSX(_6502 *mos6502) {
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
@@ -2071,7 +2077,7 @@ uint8_t	CMP_ABSX(_6502 *mos6502) {
 	mos6502->set_flag(mos6502, 'C', mos6502->A >= operand);
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == operand);
 	mos6502->set_flag(mos6502, 'N', res & 0x80);
-	mos6502->PC += 2;
+	mos6502->PC += 3;
 	return cycles;
 }
 
@@ -2347,7 +2353,7 @@ uint8_t	SED_IMP(_6502 *mos6502) {
 /*
 	SBC - op0xF9
 	ABSOLUTE Y
-	2 Bytes, 4* Cycles
+	3 Bytes, 4* Cycles
 */
 uint8_t	SBC_ABSY(_6502 *mos6502) {
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
@@ -2361,7 +2367,7 @@ uint8_t	SBC_ABSY(_6502 *mos6502) {
 	mos6502->A -= operand - (1 - mos6502->get_flag(mos6502, 'C'));
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->A & 0x80);
-	mos6502->PC += 2;
+	mos6502->PC += 3;
 	return cycles;
 }
 
@@ -2382,7 +2388,7 @@ uint8_t	SBC_ABSX(_6502 *mos6502) {
 	mos6502->A -= operand - (1 - mos6502->get_flag(mos6502, 'C'));
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->A & 0x80);
-	mos6502->PC += 2;
+	mos6502->PC += 3;
 	return cycles;
 }
 
