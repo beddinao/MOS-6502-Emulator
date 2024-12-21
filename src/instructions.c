@@ -159,7 +159,7 @@ uint8_t	ASL_ABS(_6502* mos6502) {
 uint8_t	BPL_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'N') == 0) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
@@ -292,9 +292,10 @@ uint8_t	JSR_ABS(_6502* mos6502) {
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	// high_byte first
-	mos6502->push(mos6502, mos6502->PC >> 0x8);
-	mos6502->push(mos6502, mos6502->PC & 0x00FF);
-	mos6502->PC = low_byte << 0x8 | high_byte;
+	uint16_t return_addr = mos6502->PC + 2;
+	mos6502->push(mos6502, (return_addr >> 0x8) & 0xFF);
+	mos6502->push(mos6502, return_addr & 0xFF);
+	mos6502->PC = high_byte << 0x8 | low_byte;
 	return 6;
 }
 
@@ -462,7 +463,7 @@ uint8_t	ROL_ABS(_6502 *mos6502) {
 uint8_t	BMI_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'N')) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
@@ -739,7 +740,7 @@ uint8_t	LSR_ABS(_6502 *mos6502) {
 uint8_t	BVC_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'V') == 0) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
@@ -1046,7 +1047,7 @@ uint8_t	ROR_ABS(_6502 *mos6502) {
 uint8_t	BVS_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'V')) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
@@ -1322,7 +1323,7 @@ uint8_t	STX_ABS(_6502 *mos6502) {
 uint8_t	BCC_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'C') == 0) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
@@ -1621,7 +1622,7 @@ uint8_t	LDX_ABS(_6502 *mos6502) {
 uint8_t	BCS_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'C')) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
@@ -1971,7 +1972,7 @@ uint8_t	DEC_ABS(_6502 *mos6502) {
 uint8_t	BNE_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'Z') == 0) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
@@ -2278,7 +2279,7 @@ uint8_t	INC_ABS(_6502 *mos6502) {
 uint8_t	BEQ_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'Z')) {
-		uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
+		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
 		return 3;
 	}
