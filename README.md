@@ -1,8 +1,8 @@
 # *`MOS-6502-Emulator`*
 
-<div align="center" width="100%" >
+<!--div align="center" width="100%" >
   <img align="center" src="./images/mos_6502.jpg" width="500" />
-</div>
+</div-->
 
 
 simple <a href="https://en.wikipedia.org/wiki/MOS_Technology_6502">6502 CPU </a>emulator written in C that fully supports all instructions, addressing modes, and cycle accuracy.<br>
