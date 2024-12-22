@@ -14,20 +14,17 @@ void	cpu_load_program(_bus *bus) {
 // >>>>low(00FF)>>>high(FF00)>>>> 
 
 void	stack_push(_6502 *mos6502, uint8_t val) {
-	if (!mos6502->SP)
-		mos6502->SP = 0xFF;
-	mos6502->SP--;
 	mos6502->bus->write(mos6502->bus->ram, STACK_START + mos6502->SP, val);
+	mos6502->SP--;
 }
 
 uint8_t	stack_pull(_6502 *mos6502) {
-	uint8_t	val = mos6502->bus->read(mos6502->bus->ram, STACK_START + mos6502->SP);
-	// TODO: remove
-	mos6502->bus->write(mos6502->bus->ram, STACK_START + mos6502->SP, 0x0);
-
 	mos6502->SP++;
-	if (mos6502->SP > 0xFF)
-		mos6502->SP = 0x0;
+	uint8_t	val = mos6502->bus->read(mos6502->bus->ram, STACK_START + mos6502->SP);
+
+	// TODO: remove
+	//mos6502->bus->write(mos6502->bus->ram, STACK_START + mos6502->SP, 0x0);
+
 	return val;
 }
 
@@ -36,16 +33,15 @@ uint8_t	stack_pull(_6502 *mos6502) {
 void	set_flag(_6502 *mos6502, uint8_t pos, uint8_t bit) {
 	uint8_t	sr = mos6502->SR;
 	switch (pos) {
-		case 'N':	bit ? (sr|=0x80) : (sr^=0x80); break;
-		case 'V': bit ? (sr|=0x40) : (sr^=0x40); break;
-		case 'B':	bit ? (sr|=0x10) : (sr^=0x10); break;
-		case 'D':	bit ? (sr|=0x8) : (sr^=0x8); break;
-		case 'I':	bit ? (sr|=0x4) : (sr^=0x4); break;
-		case 'Z':	bit ? (sr|=0x2) : (sr^=0x2); break;
-		case 'C':	bit ? (sr|=0x1) : (sr^=0x1); break;
-		default: bit ? (sr|0x20) : (sr^=0x20); break;
-		         // who knows what that 5th bit
-		         // can do
+		case 'N':	bit ? (sr|=0x80) : (sr&=~0x80); break;
+		case 'V': bit ? (sr|=0x40) : (sr&=~0x40); break;
+		case 'A': bit ? (sr|=0x20) : (sr&=~0x20); break;
+		case 'B':	bit ? (sr|=0x10) : (sr&=~0x10); break;
+		case 'D':	bit ? (sr|=0x8) : (sr&=~0x8); break;
+		case 'I':	bit ? (sr|=0x4) : (sr&=~0x4); break;
+		case 'Z':	bit ? (sr|=0x2) : (sr&=~0x2); break;
+		case 'C':	bit ? (sr|=0x1) : (sr&=~0x1); break;
+		default: break;
 	}
 	mos6502->SR = sr;
 }
@@ -55,12 +51,13 @@ uint8_t	get_flag(_6502* mos6502, uint8_t pos) {
 	switch (pos) {
 		case 'N': return (sr >> 0x7) & 0x1;
 		case 'V': return (sr >> 0x6) & 0x1;
+		case 'A': return (sr >> 0x5) & 0x1;
 		case 'B': return (sr >> 0x4) & 0x1;
 		case 'D': return (sr >> 0x3) & 0x1;
 		case 'I': return (sr >> 0x2) & 0x1;
 		case 'Z': return (sr >> 0x1) & 0x1;
 		case 'C': return sr & 0x1;
-		default:	return (sr >> 0x5) & 0x1;
+		default:	return 0;
 	}
 }
 
