@@ -6,23 +6,13 @@
 	BRK - op0x00
 	IMPLIED
 	1 Byte, 7 Cycles
+
+	standalone mos6502 natural stopping point
+	*from an emulator perspective
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
-	mos6502->PC++;
-	uint8_t	intr_addr = mos6502->bus->read(mos6502->bus->ram, IRQ_BRK) << 8 |
-		mos6502->bus->read(mos6502->bus->ram, IRQ_BRK + 1);
-	// high_byte first
-	mos6502->push(mos6502, mos6502->PC >> 8);
-	mos6502->push(mos6502, mos6502->PC & 0x00FF);
-	mos6502->set_flag(mos6502, 'B', 1);
-	mos6502->push(mos6502, mos6502->SR);
-	mos6502->set_flag(mos6502, 'I', 1);
-	// software interrupt is program responsiblity
-	if (intr_addr == 0) {
-		return 0;
-	}
-
-	mos6502->PC = intr_addr;
+	(void)mos6502;
+	sig_handle(0);
 	return 7;
 }
 
@@ -2541,186 +2531,923 @@ uint8_t	INC_ABSX(_6502 *mos6502) {
 	return 7;
 }
 
-/*
-	X
-	FAILBACK 
-	FOR ILLEGAL OPCODES
-*/
-uint8_t	X(_6502 *mos6502) {
+//// /// /	*ILLEGAL OPCODES
+
+/*  op0x02, 2By, 2Cy */
+uint8_t   OP_02(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x03, 2By, 8Cy */
+uint8_t   OP_03(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x04, 2By, 3Cy */
+uint8_t   OP_04(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 3;
+}
+
+/*  op0x07, 2By, 5Cy */
+uint8_t   OP_07(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 5;
+}
+
+/*  op0x0B, 2By, 2Cy */
+uint8_t   OP_0B(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x0C, 3By, 4Cy */
+uint8_t   OP_0C(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0x0F, 3By, 6Cy */
+uint8_t   OP_0F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 6;
+}
+
+/*  op0x12, 2By, 2Cy */
+uint8_t   OP_12(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x13, 2By, 8Cy */
+uint8_t   OP_13(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x14, 2By, 4Cy */
+uint8_t   OP_14(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0x17, 2By, 6Cy */
+uint8_t   OP_17(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0x1A, 1By, 2Cy */
+uint8_t   OP_1A(_6502 *mos6502) {
 	mos6502->PC += 1;
-	return 0;
+	return 2;
+}
+
+/*  op0x1B, 3By, 7Cy */
+uint8_t   OP_1B(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x1C, 3By, 4Cy */
+uint8_t   OP_1C(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0x1F, 3By, 7Cy */
+uint8_t   OP_1F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x22, 2By, 2Cy */
+uint8_t   OP_22(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x23, 2By, 8Cy */
+uint8_t   OP_23(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x27, 2By, 5Cy */
+uint8_t   OP_27(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 5;
+}
+
+/*  op0x2B, 2By, 2Cy */
+uint8_t   OP_2B(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x2F, 3By, 6Cy */
+uint8_t   OP_2F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 6;
+}
+
+/*  op0x32, 2By, 2Cy */
+uint8_t   OP_32(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x33, 2By, 8Cy */
+uint8_t   OP_33(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x34, 2By, 4Cy */
+uint8_t   OP_34(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0x37, 2By, 6Cy */
+uint8_t   OP_37(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0x3A, 1By, 2Cy */
+uint8_t   OP_3A(_6502 *mos6502) {
+	mos6502->PC += 1;
+	return 2;
+}
+
+/*  op0x3B, 3By, 7Cy */
+uint8_t   OP_3B(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x3C, 3By, 4Cy */
+uint8_t   OP_3C(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0x3F, 3By, 7Cy */
+uint8_t   OP_3F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x42, 2By, 2Cy */
+uint8_t   OP_42(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x43, 2By, 8Cy */
+uint8_t   OP_43(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x44, 2By, 3Cy */
+uint8_t   OP_44(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 3;
+}
+
+/*  op0x47, 2By, 5Cy */
+uint8_t   OP_47(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 5;
+}
+
+/*  op0x4B, 2By, 2Cy */
+uint8_t   OP_4B(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x4F, 3By, 6Cy */
+uint8_t   OP_4F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 6;
+}
+
+/*  op0x52, 2By, 2Cy */
+uint8_t   OP_52(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x53, 2By, 8Cy */
+uint8_t   OP_53(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x54, 2By, 4Cy */
+uint8_t   OP_54(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0x57, 2By, 6Cy */
+uint8_t   OP_57(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0x5A, 1By, 2Cy */
+uint8_t   OP_5A(_6502 *mos6502) {
+	mos6502->PC += 1;
+	return 2;
+}
+
+/*  op0x5B, 3By, 7Cy */
+uint8_t   OP_5B(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x5C, 3By, 4Cy */
+uint8_t   OP_5C(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0x5F, 3By, 7Cy */
+uint8_t   OP_5F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x62, 2By, 2Cy */
+uint8_t   OP_62(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x63, 2By, 8Cy */
+uint8_t   OP_63(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x64, 2By, 3Cy */
+uint8_t   OP_64(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 3;
+}
+
+/*  op0x67, 2By, 5Cy */
+uint8_t   OP_67(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 5;
+}
+
+/*  op0x6B, 2By, 2Cy */
+uint8_t   OP_6B(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x6F, 3By, 6Cy */
+uint8_t   OP_6F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 6;
+}
+
+/*  op0x72, 2By, 2Cy */
+uint8_t   OP_72(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x73, 2By, 8Cy */
+uint8_t   OP_73(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0x74, 2By, 4Cy */
+uint8_t   OP_74(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0x77, 2By, 6Cy */
+uint8_t   OP_77(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0x7A, 1By, 2Cy */
+uint8_t   OP_7A(_6502 *mos6502) {
+	mos6502->PC += 1;
+	return 2;
+}
+
+/*  op0x7B, 3By, 7Cy */
+uint8_t   OP_7B(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x7C, 3By, 4Cy */
+uint8_t   OP_7C(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0x7F, 3By, 7Cy */
+uint8_t   OP_7F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0x80, 2By, 2Cy */
+uint8_t   OP_80(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x82, 2By, 2Cy */
+uint8_t   OP_82(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x83, 2By, 6Cy */
+uint8_t   OP_83(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0x87, 2By, 3Cy */
+uint8_t   OP_87(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 3;
+}
+
+/*  op0x89, 2By, 2Cy */
+uint8_t   OP_89(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x8B, 2By, 2Cy */
+uint8_t   OP_8B(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x8F, 3By, 4Cy */
+uint8_t   OP_8F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0x92, 2By, 2Cy */
+uint8_t   OP_92(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0x93, 2By, 6Cy */
+uint8_t   OP_93(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0x94, 2By, 4Cy */
+uint8_t   OP_94(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0x97, 2By, 4Cy */
+uint8_t   OP_97(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0x9B, 3By, 5Cy */
+uint8_t   OP_9B(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 5;
+}
+
+/*  op0x9C, 3By, 5Cy */
+uint8_t   OP_9C(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 5;
+}
+
+/*  op0x9E, 3By, 5Cy */
+uint8_t   OP_9E(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 5;
+}
+
+/*  op0x9F, 3By, 5Cy */
+uint8_t   OP_9F(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 5;
+}
+
+/*  op0xA3, 2By, 6Cy */
+uint8_t   OP_A3(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0xA7, 2By, 3Cy */
+uint8_t   OP_A7(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 3;
+}
+
+/*  op0xAB, 2By, 2Cy */
+uint8_t   OP_AB(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xAF, 3By, 4Cy */
+uint8_t   OP_AF(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0xB2, 2By, 2Cy */
+uint8_t   OP_B2(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xB3, 2By, 5Cy */
+uint8_t   OP_B3(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 5;
+}
+
+/*  op0xB4, 2By, 4Cy */
+uint8_t   OP_B4(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0xB7, 2By, 4Cy */
+uint8_t   OP_B7(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0xBB, 3By, 4Cy */
+uint8_t   OP_BB(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0xBF, 3By, 4Cy */
+uint8_t   OP_BF(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0xC2, 2By, 2Cy */
+uint8_t   OP_C2(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xC3, 2By, 8Cy */
+uint8_t   OP_C3(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0xC7, 2By, 5Cy */
+uint8_t   OP_C7(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 5;
+}
+
+/*  op0xCB, 2By, 2Cy */
+uint8_t   OP_CB(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xCF, 3By, 6Cy */
+uint8_t   OP_CF(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 6;
+}
+
+/*  op0xD2, 2By, 2Cy */
+uint8_t   OP_D2(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xD3, 2By, 8Cy */
+uint8_t   OP_D3(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0xD4, 2By, 4Cy */
+uint8_t   OP_D4(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0xD7, 2By, 6Cy */
+uint8_t   OP_D7(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0xDA, 1By, 2Cy */
+uint8_t   OP_DA(_6502 *mos6502) {
+	mos6502->PC += 1;
+	return 2;
+}
+
+/*  op0xDB, 3By, 7Cy */
+uint8_t   OP_DB(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0xDC, 3By, 4Cy */
+uint8_t   OP_DC(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0xDF, 3By, 7Cy */
+uint8_t   OP_DF(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0xE2, 2By, 2Cy */
+uint8_t   OP_E2(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xE3, 2By, 8Cy */
+uint8_t   OP_E3(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0xE7, 2By, 5Cy */
+uint8_t   OP_E7(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 5;
+}
+
+/*  op0xEB, 2By, 2Cy */
+uint8_t   OP_EB(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xEF, 3By, 6Cy */
+uint8_t   OP_EF(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 6;
+}
+
+/*  op0xF2, 2By, 2Cy */
+uint8_t   OP_F2(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 2;
+}
+
+/*  op0xF3, 2By, 8Cy */
+uint8_t   OP_F3(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 8;
+}
+
+/*  op0xF4, 2By, 4Cy */
+uint8_t   OP_F4(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 4;
+}
+
+/*  op0xF7, 2By, 6Cy */
+uint8_t   OP_F7(_6502 *mos6502) {
+	mos6502->PC += 2;
+	return 6;
+}
+
+/*  op0xFA, 1By, 2Cy */
+uint8_t   OP_FA(_6502 *mos6502) {
+	mos6502->PC += 1;
+	return 2;
+}
+
+/*  op0xFB, 3By, 7Cy */
+uint8_t   OP_FB(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
+}
+
+/*  op0xFC, 3By, 4Cy */
+uint8_t   OP_FC(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 4;
+}
+
+/*  op0xFF, 3By, 7Cy */
+uint8_t   OP_FF(_6502 *mos6502) {
+	mos6502->PC += 3;
+	return 7;
 }
 
 /// / //	LOADING
 
 void	load_instructions(_6502* mos6502){
-	for (unsigned i = 0; i < 0x100; i++) 
-		mos6502->opcodes[i] = X;
-	//	MSD 0
+	//  MSD 0
 	mos6502->opcodes[0x00] = BRK_IMP;
 	mos6502->opcodes[0x01] = ORA_INDX;
+	mos6502->opcodes[0x02] = OP_02;
+	mos6502->opcodes[0x03] = OP_03;
+	mos6502->opcodes[0x04] = OP_04;
 	mos6502->opcodes[0x05] = ORA_ZP;
 	mos6502->opcodes[0x06] = ASL_ZP;
+	mos6502->opcodes[0x07] = OP_07;
 	mos6502->opcodes[0x08] = PHP_IMP;
 	mos6502->opcodes[0x09] = ORA_IMM;
 	mos6502->opcodes[0x0A] = ASL_ACC;
+	mos6502->opcodes[0x0B] = OP_0B;
+	mos6502->opcodes[0x0C] = OP_0C;
 	mos6502->opcodes[0x0D] = ORA_ABS;
 	mos6502->opcodes[0x0E] = ASL_ABS;
-	//	MSD 1 
+	mos6502->opcodes[0x0F] = OP_0F;
+	//  MSD 1 
 	mos6502->opcodes[0x10] = BPL_REL;
 	mos6502->opcodes[0x11] = ORA_INDY;
+	mos6502->opcodes[0x12] = OP_12;
+	mos6502->opcodes[0x13] = OP_13;
+	mos6502->opcodes[0x14] = OP_14;
 	mos6502->opcodes[0x15] = ORA_ZPX;
 	mos6502->opcodes[0x16] = ASL_ZPX;
+	mos6502->opcodes[0x17] = OP_17;
 	mos6502->opcodes[0x18] = CLC_IMP;
 	mos6502->opcodes[0x19] = ORA_ABSY;
+	mos6502->opcodes[0x1A] = OP_1A;
+	mos6502->opcodes[0x1B] = OP_1B;
+	mos6502->opcodes[0x1C] = OP_1C;
 	mos6502->opcodes[0x1D] = ORA_ABSX;
 	mos6502->opcodes[0x1E] = ASL_ABSX;
-	//	MSD 2 
+	mos6502->opcodes[0x1F] = OP_1F;
+	//  MSD 2
 	mos6502->opcodes[0x20] = JSR_ABS;
 	mos6502->opcodes[0x21] = AND_INDX;
+	mos6502->opcodes[0x22] = OP_22;
+	mos6502->opcodes[0x23] = OP_23;
 	mos6502->opcodes[0x24] = BIT_ZP;
 	mos6502->opcodes[0x25] = AND_ZP;
 	mos6502->opcodes[0x26] = ROL_ZP;
+	mos6502->opcodes[0x27] = OP_27;
 	mos6502->opcodes[0x28] = PLP_IMP;
 	mos6502->opcodes[0x29] = AND_IMM;
 	mos6502->opcodes[0x2A] = ROL_ACC;
+	mos6502->opcodes[0x2B] = OP_2B;
 	mos6502->opcodes[0x2C] = BIT_ABS;
 	mos6502->opcodes[0x2D] = AND_ABS;
 	mos6502->opcodes[0x2E] = ROL_ABS;
-	//	MSD 3 
+	mos6502->opcodes[0x2F] = OP_2F;
+	//  MSD 3
 	mos6502->opcodes[0x30] = BMI_REL;
 	mos6502->opcodes[0x31] = AND_INDY;
+	mos6502->opcodes[0x32] = OP_32;
+	mos6502->opcodes[0x33] = OP_33;
+	mos6502->opcodes[0x34] = OP_34;
 	mos6502->opcodes[0x35] = AND_ZPX;
 	mos6502->opcodes[0x36] = ROL_ZPX;
+	mos6502->opcodes[0x37] = OP_37;
 	mos6502->opcodes[0x38] = SEC_IMP;
 	mos6502->opcodes[0x39] = AND_ABSY;
+	mos6502->opcodes[0x3A] = OP_3A;
+	mos6502->opcodes[0x3B] = OP_3B;
+	mos6502->opcodes[0x3C] = OP_3C;
 	mos6502->opcodes[0x3D] = AND_ABSX;
 	mos6502->opcodes[0x3E] = ROL_ABSX;
-	//	MSD 4 
+	mos6502->opcodes[0x3F] = OP_3F;
+	//  MSD 4
 	mos6502->opcodes[0x40] = RTI_IMP;
 	mos6502->opcodes[0x41] = EOR_INDX;
+	mos6502->opcodes[0x42] = OP_42;
+	mos6502->opcodes[0x43] = OP_43;
+	mos6502->opcodes[0x44] = OP_44;
 	mos6502->opcodes[0x45] = EOR_ZP;
 	mos6502->opcodes[0x46] = LSR_ZP;
+	mos6502->opcodes[0x47] = OP_47;
 	mos6502->opcodes[0x48] = PHA_IMP;
 	mos6502->opcodes[0x49] = EOR_IMM;
 	mos6502->opcodes[0x4A] = LSR_ACC;
+	mos6502->opcodes[0x4B] = OP_4B;
 	mos6502->opcodes[0x4C] = JMP_ABS;
 	mos6502->opcodes[0x4D] = EOR_ABS;
 	mos6502->opcodes[0x4E] = LSR_ABS;
-	//	MSD 5 
+	mos6502->opcodes[0x4F] = OP_4F;
+	//  MSD 5
 	mos6502->opcodes[0x50] = BVC_REL;
 	mos6502->opcodes[0x51] = EOR_INDY;
+	mos6502->opcodes[0x52] = OP_52;
+	mos6502->opcodes[0x53] = OP_53;
+	mos6502->opcodes[0x54] = OP_54;
 	mos6502->opcodes[0x55] = EOR_ZPX;
 	mos6502->opcodes[0x56] = LSR_ZPX;
+	mos6502->opcodes[0x57] = OP_57;
 	mos6502->opcodes[0x58] = CLI_IMP;
 	mos6502->opcodes[0x59] = EOR_ABSY;
+	mos6502->opcodes[0x5A] = OP_5A;
+	mos6502->opcodes[0x5B] = OP_5B;
+	mos6502->opcodes[0x5C] = OP_5C;
 	mos6502->opcodes[0x5D] = EOR_ABSX;
 	mos6502->opcodes[0x5E] = LSR_ABSX;
-	//	MSD 6 
+	mos6502->opcodes[0x5F] = OP_5F;
+	//  MSD 6
 	mos6502->opcodes[0x60] = RTS_IMP;
 	mos6502->opcodes[0x61] = ADC_INDX;
+	mos6502->opcodes[0x62] = OP_62;
+	mos6502->opcodes[0x63] = OP_63;
+	mos6502->opcodes[0x64] = OP_64;
 	mos6502->opcodes[0x65] = ADC_ZP;
 	mos6502->opcodes[0x66] = ROR_ZP;
+	mos6502->opcodes[0x67] = OP_67;
 	mos6502->opcodes[0x68] = PLA_IMP;
 	mos6502->opcodes[0x69] = ADC_IMM;
 	mos6502->opcodes[0x6A] = ROR_ACC;
+	mos6502->opcodes[0x6B] = OP_6B;
 	mos6502->opcodes[0x6C] = JMP_IND;
 	mos6502->opcodes[0x6D] = ADC_ABS;
 	mos6502->opcodes[0x6E] = ROR_ABS;
-	//	MSD 7 
+	mos6502->opcodes[0x6F] = OP_6F;
+	//  MSD 7
 	mos6502->opcodes[0x70] = BVS_REL;
 	mos6502->opcodes[0x71] = ADC_INDY;
+	mos6502->opcodes[0x72] = OP_72;
+	mos6502->opcodes[0x73] = OP_73;
+	mos6502->opcodes[0x74] = OP_74;
 	mos6502->opcodes[0x75] = ADC_ZPX;
 	mos6502->opcodes[0x76] = ROR_ZPX;
+	mos6502->opcodes[0x77] = OP_77;
 	mos6502->opcodes[0x78] = SEI_IMP;
 	mos6502->opcodes[0x79] = ADC_ABSY;
+	mos6502->opcodes[0x7A] = OP_7A;
+	mos6502->opcodes[0x7B] = OP_7B;
+	mos6502->opcodes[0x7C] = OP_7C;
 	mos6502->opcodes[0x7D] = ADC_ABSX;
 	mos6502->opcodes[0x7E] = ROR_ABSX;
-	//	MSD 8 
+	mos6502->opcodes[0x7F] = OP_7F;
+	//  MSD 8
+	mos6502->opcodes[0x80] = OP_80;
 	mos6502->opcodes[0x81] = STA_INDX;
+	mos6502->opcodes[0x82] = OP_82;
+	mos6502->opcodes[0x83] = OP_83;
 	mos6502->opcodes[0x84] = STY_ZP;
 	mos6502->opcodes[0x85] = STA_ZP;
 	mos6502->opcodes[0x86] = STX_ZP;
+	mos6502->opcodes[0x87] = OP_87;
 	mos6502->opcodes[0x88] = DEY_IMP;
+	mos6502->opcodes[0x89] = OP_89;
 	mos6502->opcodes[0x8A] = TXA_IMP;
+	mos6502->opcodes[0x8B] = OP_8B;
 	mos6502->opcodes[0x8C] = STY_ABS;
 	mos6502->opcodes[0x8D] = STA_ABS;
 	mos6502->opcodes[0x8E] = STX_ABS;
-	//	MSD 9 
+	mos6502->opcodes[0x8F] = OP_8F;
+	//  MSD 9
 	mos6502->opcodes[0x90] = BCC_REL;
 	mos6502->opcodes[0x91] = STA_INDY;
+	mos6502->opcodes[0x92] = OP_92;
+	mos6502->opcodes[0x93] = OP_93;
 	mos6502->opcodes[0x94] = STY_ZPX;
 	mos6502->opcodes[0x95] = STA_ZPX;
 	mos6502->opcodes[0x96] = STX_ZPY;
+	mos6502->opcodes[0x97] = OP_97;
 	mos6502->opcodes[0x98] = TYA_IMP;
 	mos6502->opcodes[0x99] = STA_ABSY;
 	mos6502->opcodes[0x9A] = TXS_IMP;
+	mos6502->opcodes[0x9B] = OP_9B;
+	mos6502->opcodes[0x9C] = OP_9C;
 	mos6502->opcodes[0x9D] = STA_ABSX;
-	//	MSD A 
+	mos6502->opcodes[0x9E] = OP_9E;
+	mos6502->opcodes[0x9F] = OP_9F;
+	//  MSD A
 	mos6502->opcodes[0xA0] = LDY_IMM;
 	mos6502->opcodes[0xA1] = LDA_INDX;
 	mos6502->opcodes[0xA2] = LDX_IMM;
+	mos6502->opcodes[0xA3] = OP_A3;
 	mos6502->opcodes[0xA4] = LDY_ZP;
 	mos6502->opcodes[0xA5] = LDA_ZP;
 	mos6502->opcodes[0xA6] = LDX_ZP;
+	mos6502->opcodes[0xA7] = OP_A7;
 	mos6502->opcodes[0xA8] = TAY_IMP;
 	mos6502->opcodes[0xA9] = LDA_IMM;
 	mos6502->opcodes[0xAA] = TAX_IMP;
+	mos6502->opcodes[0xAB] = OP_AB;
 	mos6502->opcodes[0xAC] = LDY_ABS;
 	mos6502->opcodes[0xAD] = LDA_ABS;
 	mos6502->opcodes[0xAE] = LDX_ABS;
-	//	MSD B 
+	mos6502->opcodes[0xAF] = OP_AF;
+	//  MSD B
 	mos6502->opcodes[0xB0] = BCS_REL;
 	mos6502->opcodes[0xB1] = LDA_INDY;
+	mos6502->opcodes[0xB2] = OP_B2;
+	mos6502->opcodes[0xB3] = OP_B3;
 	mos6502->opcodes[0xB4] = LDY_ZPX;
 	mos6502->opcodes[0xB5] = LDA_ZPX;
 	mos6502->opcodes[0xB6] = LDX_ZPY;
+	mos6502->opcodes[0xB7] = OP_B7;
 	mos6502->opcodes[0xB8] = CLV_IMP;
 	mos6502->opcodes[0xB9] = LDA_ABSY;
 	mos6502->opcodes[0xBA] = TSX_IMP;
+	mos6502->opcodes[0xBB] = OP_BB;
 	mos6502->opcodes[0xBC] = LDY_ABSX;
 	mos6502->opcodes[0xBD] = LDA_ABSX;
 	mos6502->opcodes[0xBE] = LDX_ABSY;
-	//	MSD C 
+	mos6502->opcodes[0xBF] = OP_BF;
+	//  MSD C
 	mos6502->opcodes[0xC0] = CPY_IMM;
 	mos6502->opcodes[0xC1] = CMP_INDX;
+	mos6502->opcodes[0xC2] = OP_C2;
+	mos6502->opcodes[0xC3] = OP_C3;
 	mos6502->opcodes[0xC4] = CPY_ZP;
 	mos6502->opcodes[0xC5] = CMP_ZP;
 	mos6502->opcodes[0xC6] = DEC_ZP;
+	mos6502->opcodes[0xC7] = OP_C7;
 	mos6502->opcodes[0xC8] = INY_IMP;
 	mos6502->opcodes[0xC9] = CMP_IMM;
 	mos6502->opcodes[0xCA] = DEX_IMP;
+	mos6502->opcodes[0xCB] = OP_CB;
 	mos6502->opcodes[0xCC] = CPY_ABS;
 	mos6502->opcodes[0xCD] = CMP_ABS;
 	mos6502->opcodes[0xCE] = DEC_ABS;
-	//	MSD D
+	mos6502->opcodes[0xCF] = OP_CF;
+	//  MSD D
 	mos6502->opcodes[0xD0] = BNE_REL;
 	mos6502->opcodes[0xD1] = CMP_INDY;
+	mos6502->opcodes[0xD2] = OP_D2;
+	mos6502->opcodes[0xD3] = OP_D3;
+	mos6502->opcodes[0xD4] = OP_D4;
 	mos6502->opcodes[0xD5] = CMP_ZPX;
 	mos6502->opcodes[0xD6] = DEC_ZPX;
+	mos6502->opcodes[0xD7] = OP_D7;
 	mos6502->opcodes[0xD8] = CLD_IMP;
 	mos6502->opcodes[0xD9] = CMP_ABSY;
+	mos6502->opcodes[0xDA] = OP_DA;
+	mos6502->opcodes[0xDB] = OP_DB;
+	mos6502->opcodes[0xDC] = OP_DC;
 	mos6502->opcodes[0xDD] = CMP_ABSX;
 	mos6502->opcodes[0xDE] = DEC_ABSX;
-	//	MSD E 
+	mos6502->opcodes[0xDF] = OP_DF;
+	//  MSD E
 	mos6502->opcodes[0xE0] = CPX_IMM;
 	mos6502->opcodes[0xE1] = SBC_INDX;
+	mos6502->opcodes[0xE2] = OP_E2;
+	mos6502->opcodes[0xE3] = OP_E3;
 	mos6502->opcodes[0xE4] = CPX_ZP;
 	mos6502->opcodes[0xE5] = SBC_ZP;
 	mos6502->opcodes[0xE6] = INC_ZP;
+	mos6502->opcodes[0xE7] = OP_E7;
 	mos6502->opcodes[0xE8] = INX_IMP;
 	mos6502->opcodes[0xE9] = SBC_IMM;
 	mos6502->opcodes[0xEA] = NOP_IMP;
+	mos6502->opcodes[0xEB] = OP_EB;
 	mos6502->opcodes[0xEC] = CPX_ABS;
 	mos6502->opcodes[0xED] = SBC_ABS;
 	mos6502->opcodes[0xEE] = INC_ABS;
-	//	MSD F 
+	mos6502->opcodes[0xEF] = OP_EF;
+	//  MSD F
 	mos6502->opcodes[0xF0] = BEQ_REL;
 	mos6502->opcodes[0xF1] = SBC_INDY;
+	mos6502->opcodes[0xF2] = OP_F2;
+	mos6502->opcodes[0xF3] = OP_F3;
+	mos6502->opcodes[0xF4] = OP_F4;
 	mos6502->opcodes[0xF5] = SBC_ZPX;
 	mos6502->opcodes[0xF6] = INC_ZPX;
+	mos6502->opcodes[0xF7] = OP_F7;
 	mos6502->opcodes[0xF8] = SED_IMP;
 	mos6502->opcodes[0xF9] = SBC_ABSY;
+	mos6502->opcodes[0xFA] = OP_FA;
+	mos6502->opcodes[0xFB] = OP_FB;
+	mos6502->opcodes[0xFC] = OP_FC;
 	mos6502->opcodes[0xFD] = SBC_ABSX;
 	mos6502->opcodes[0xFE] = INC_ABSX;
+	mos6502->opcodes[0xFF] = OP_FF;
 }
