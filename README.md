@@ -36,7 +36,7 @@ The 8-bit opcode design allows for 256 possible values, but many are "illegal op
 These undocumented instructions perform unexpected or unconventional operations,<br>
 such as modifying multiple registers or combining valid opcodes.<br>
 
-Illegal opcodes are currently unimplemented, and executing them results in a simple NOP.
+Illegal opcodes are not implemented, and executing them will only increments the PC by the OP size.
 
 ## main loop
 classic fetch-decode-execute cycle:
@@ -93,5 +93,5 @@ allowing for real-time observation of the CPU behavior
 
 ## upcoming features
 - 100% Cycles accuracy
-- illegal opcodes implementation
-- decimal mode support (not crucial for NES emulation)
+- full illegal opcodes implementation
+- decimal mode support
