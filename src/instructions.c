@@ -12,8 +12,7 @@
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
 	(void)mos6502;
-	sig_handle(0);
-	return 7;
+	return 0;
 }
 
 /*
