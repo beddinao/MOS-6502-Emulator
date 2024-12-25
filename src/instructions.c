@@ -6,13 +6,26 @@
 	BRK - op0x00
 	IMPLIED
 	1 Byte, 7 Cycles
-
-	standalone mos6502 natural stopping point
-	*from an emulator perspective
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
-	(void)mos6502;
-	sig_handle(0);
+	//printf("BRK IMP");
+	mos6502->PC++;
+	uint8_t	brk_vector_low = mos6502->bus->read(mos6502->bus->ram, IRQ_BRK);
+	uint8_t	brk_vector_high = mos6502->bus->read(mos6502->bus->ram, IRQ_BRK + 1);
+
+	mos6502->push(mos6502, mos6502->PC >> 8);
+	mos6502->push(mos6502, mos6502->PC & 0x00FF);
+	mos6502->set_flag(mos6502, 'B', 1);
+	mos6502->push(mos6502, mos6502->SR);
+	mos6502->set_flag(mos6502, 'I', 1);
+
+	// software interrupt is program responsiblity
+	if (!brk_vector_low && !brk_vector_high) {
+		////printf("invalid interrupt address(0x%04X) skipping", intr_addr);
+		return 0;
+	}
+
+	mos6502->PC = brk_vector_high << 8 | brk_vector_low;
 	return 7;
 }
 
@@ -22,6 +35,7 @@ uint8_t	BRK_IMP(_6502* mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	ORA_INDX(_6502* mos6502) {
+	//printf("ORA_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -41,6 +55,7 @@ uint8_t	ORA_INDX(_6502* mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	ORA_ZP(_6502* mos6502){
+	//printf("ORA_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	mos6502->A |= operand;
@@ -56,6 +71,7 @@ uint8_t	ORA_ZP(_6502* mos6502){
 	2 Bytes, 5 Cycles
 */
 uint8_t	ASL_ZP(_6502* mos6502) {
+	//printf("ASL_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	mos6502->set_flag(mos6502, 'C', (operand >> 0x7) & 0x1);
@@ -73,6 +89,7 @@ uint8_t	ASL_ZP(_6502* mos6502) {
 	1 Byte, 3 Cycles
 */
 uint8_t	PHP_IMP(_6502 *mos6502) {
+	//printf("PHP_IMP");
 	uint8_t pushed_status = mos6502->SR;
 	pushed_status |= 0x20;
 	pushed_status |= 0x10;
@@ -89,6 +106,7 @@ uint8_t	PHP_IMP(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	ORA_IMM(_6502 *mos6502) {
+	//printf("ORA_IMM");
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->A |= operand;
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
@@ -103,6 +121,7 @@ uint8_t	ORA_IMM(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	ASL_ACC(_6502 *mos6502) {
+	//printf("ASL_ACC");
 	mos6502->set_flag(mos6502, 'C', (mos6502->A >> 0x7) & 0x1);
 	mos6502->A <<= 0x1;
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
@@ -117,6 +136,7 @@ uint8_t	ASL_ACC(_6502 *mos6502) {
 	3 Byte, 4 Cycles
 */
 uint8_t	ORA_ABS(_6502 *mos6502) {
+	//printf("ORA_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->A |= mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -132,6 +152,7 @@ uint8_t	ORA_ABS(_6502 *mos6502) {
 	3 Bytes, 6 Cycles
 */
 uint8_t	ASL_ABS(_6502* mos6502) {
+	//printf("ASL_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -148,9 +169,14 @@ uint8_t	ASL_ABS(_6502* mos6502) {
 	BPL - op0x10
 	RELATIVE
 	2 Bytes, 2** Cycles
+
+	     N V A B  D I Z C
+	164  1 0 1 0  0 1 0 0
+	38   0 0 1 0  0 1 0 0
 */
 uint8_t	BPL_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
+	//printf("BPL_REL");
 	if (mos6502->get_flag(mos6502, 'N') == 0) {
 		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
 		mos6502->PC += operand;
@@ -165,6 +191,7 @@ uint8_t	BPL_REL(_6502 *mos6502) {
 	2 Bytes, 5* Cycles
 */
 uint8_t	ORA_INDY(_6502* mos6502) {
+	//printf("ORA_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -185,6 +212,7 @@ uint8_t	ORA_INDY(_6502* mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	ORA_ZPX(_6502* mos6502) {
+	//printf("ORA_ZPX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) + mos6502->X);
 	mos6502->A |= operand;
@@ -200,6 +228,7 @@ uint8_t	ORA_ZPX(_6502* mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	ASL_ZPX(_6502* mos6502) {
+	//printf("ASL_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint16_t	addr = ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF;
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, addr);
@@ -218,6 +247,7 @@ uint8_t	ASL_ZPX(_6502* mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	CLC_IMP(_6502 *mos6502) {
+	//printf("CLC_IMP");
 	mos6502->set_flag(mos6502, 'C', 0);
 	mos6502->PC += 1;
 	return 2;
@@ -229,6 +259,7 @@ uint8_t	CLC_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	ORA_ABSY(_6502 *mos6502) {
+	//printf("ORA_ABSY");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t absy_addr = (high_byte << 0x8 | low_byte) + mos6502->Y;
@@ -246,6 +277,7 @@ uint8_t	ORA_ABSY(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	ORA_ABSX(_6502 *mos6502) {
+	//printf("ORA_ABSX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -263,6 +295,7 @@ uint8_t	ORA_ABSX(_6502 *mos6502) {
 	3 Bytes, 7 Cycles
 */
 uint8_t	ASL_ABSX(_6502 *mos6502) {
+	//printf("ASL_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -289,6 +322,7 @@ uint8_t	JSR_ABS(_6502* mos6502) {
 	mos6502->push(mos6502, (return_addr >> 0x8) & 0xFF);
 	mos6502->push(mos6502, return_addr & 0xFF);
 	mos6502->PC = high_byte << 0x8 | low_byte;
+	//printf("JSR_ABS");
 	return 6;
 }
 
@@ -298,6 +332,7 @@ uint8_t	JSR_ABS(_6502* mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	AND_INDX(_6502 *mos6502) {
+	//printf("AND_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -316,6 +351,7 @@ uint8_t	AND_INDX(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	BIT_ZP(_6502 *mos6502) {
+	//printf("BIT_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	mos6502->set_flag(mos6502, 'Z', (operand & mos6502->A) == 0);
@@ -331,6 +367,7 @@ uint8_t	BIT_ZP(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	AND_ZP(_6502 *mos6502) {
+	//printf("AND_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, 0x00 << 0x8 | low_byte);
 	mos6502->A &= operand;
@@ -346,6 +383,7 @@ uint8_t	AND_ZP(_6502 *mos6502) {
 	2 Bytes, 5 Cycles
 */
 uint8_t	ROL_ZP(_6502 *mos6502) {
+	//printf("ROL_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 8 | low_byte) & 0xFF),
 		old_carry = mos6502->get_flag(mos6502, 'C'),
@@ -365,6 +403,7 @@ uint8_t	ROL_ZP(_6502 *mos6502) {
 	1 Byte, 4 Cycles
 */
 uint8_t	PLP_IMP(_6502 *mos6502) {
+	//printf("PLP_IMP");
 	mos6502->SR = mos6502->pull(mos6502);
 	mos6502->SR &= ~0x10;
 	mos6502->SR |= 0x20;
@@ -378,6 +417,7 @@ uint8_t	PLP_IMP(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	AND_IMM(_6502 *mos6502) {
+	//printf("AND_IMM");
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->A &= operand;
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
@@ -392,6 +432,7 @@ uint8_t	AND_IMM(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	ROL_ACC(_6502 *mos6502) {
+	//printf("ROL_ACC");
 	uint8_t	old_carry = mos6502->get_flag(mos6502, 'C'),
 		new_carry = (mos6502->A & 0x80) >> 7;
 
@@ -411,6 +452,7 @@ uint8_t	ROL_ACC(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	BIT_ABS(_6502 *mos6502) {
+	//printf("BIT_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	       	high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -427,6 +469,7 @@ uint8_t	BIT_ABS(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	AND_ABS(_6502 *mos6502) {
+	//printf("AND_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->A &= mos6502->bus->read(mos6502->bus->ram, high_byte << 8 | low_byte);
@@ -442,6 +485,7 @@ uint8_t	AND_ABS(_6502 *mos6502) {
 	3 Bytes, 6 Cycles
 */
 uint8_t	ROL_ABS(_6502 *mos6502) {
+	//printf("ROL_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 8 | low_byte),
@@ -464,6 +508,7 @@ uint8_t	ROL_ABS(_6502 *mos6502) {
 	2 Bytes, 2** Cycles
 */
 uint8_t	BMI_REL(_6502 *mos6502) {
+	//printf("BMI_REL\b");
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'N')) {
 		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
@@ -479,6 +524,7 @@ uint8_t	BMI_REL(_6502 *mos6502) {
 	2 Bytes, 5* Cycles
 */
 uint8_t	AND_INDY(_6502 *mos6502) {
+	//printf("AND_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -499,6 +545,7 @@ uint8_t	AND_INDY(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	AND_ZPX(_6502 *mos6502) {
+	//printf("AND_ZPX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF);
 	mos6502->A &= operand;
@@ -514,6 +561,7 @@ uint8_t	AND_ZPX(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	ROL_ZPX(_6502 *mos6502) {
+	//printf("ROL_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint16_t	addr = ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF;
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, addr),
@@ -536,6 +584,7 @@ uint8_t	ROL_ZPX(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	SEC_IMP(_6502 *mos6502) {
+	//printf("SEC_IMP");
 	mos6502->set_flag(mos6502, 'C', 1);
 	mos6502->PC += 1;
 	return 2;
@@ -547,6 +596,7 @@ uint8_t	SEC_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	AND_ABSY(_6502 *mos6502) {
+	//printf("AND_ABSY");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t absy_addr = (high_byte << 0x8 | low_byte) + mos6502->Y;
@@ -564,6 +614,7 @@ uint8_t	AND_ABSY(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	AND_ABSX(_6502 *mos6502) {
+	//printf("AND_ABSX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -581,6 +632,7 @@ uint8_t	AND_ABSX(_6502 *mos6502) {
 	3 Bytes, 7 Cycles
 */
 uint8_t	ROL_ABSX(_6502 *mos6502) {
+	//printf("ROL_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -604,6 +656,7 @@ uint8_t	ROL_ABSX(_6502 *mos6502) {
 	1 Byte, 6 Cycles
 */
 uint8_t	RTI_IMP(_6502 *mos6502) {
+	//printf("RTI_IMP");
 	mos6502->SR = mos6502->pull(mos6502);
 	mos6502->SR &= ~0x10;
 	mos6502->SR |= 0x20;
@@ -618,6 +671,7 @@ uint8_t	RTI_IMP(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	EOR_INDX(_6502 *mos6502) {
+	//printf("EOR_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -636,6 +690,7 @@ uint8_t	EOR_INDX(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	EOR_ZP(_6502 *mos6502) {
+	//printf("EOR_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 8 | low_byte) & 0xFF);
 	mos6502->A ^= operand;
@@ -657,6 +712,7 @@ uint8_t	EOR_ZP(_6502 *mos6502) {
 	24  0 0 1 0  0 1 0 0 ->	
 */
 uint8_t	LSR_ZP(_6502 *mos6502) {
+	//printf("LSR_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 8 | low_byte) & 0xFF);
 	mos6502->set_flag(mos6502, 'C', operand & 0x1);
@@ -674,6 +730,7 @@ uint8_t	LSR_ZP(_6502 *mos6502) {
 	1 Byte, 3 Cycles
 */
 uint8_t	PHA_IMP(_6502 *mos6502) {
+	//printf("PHA_IMP");
 	mos6502->push(mos6502, mos6502->A);
 	mos6502->PC += 1;
 	return 3;
@@ -685,6 +742,7 @@ uint8_t	PHA_IMP(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	EOR_IMM(_6502 *mos6502) {
+	//printf("EOR_IMM");
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->A ^= operand;
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
@@ -705,6 +763,7 @@ uint8_t	EOR_IMM(_6502 *mos6502) {
 	24  0 0 1 0  0 1 0 0 ->
 */
 uint8_t	LSR_ACC(_6502 *mos6502) {
+	//printf("LSR_ACC");
 	mos6502->set_flag(mos6502, 'C', mos6502->A & 0x1);
 	mos6502->A >>= 0x1;
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
@@ -719,6 +778,7 @@ uint8_t	LSR_ACC(_6502 *mos6502) {
 	3 Bytes, 3 Cycles
 */
 uint8_t	JMP_ABS(_6502 *mos6502) {
+	//printf("JMP_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->PC = high_byte << 0x8 | low_byte;
@@ -731,6 +791,7 @@ uint8_t	JMP_ABS(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	EOR_ABS(_6502 *mos6502) {
+	//printf("EOR_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->A ^= mos6502->bus->read(mos6502->bus->ram, high_byte << 8 | low_byte);
@@ -746,6 +807,7 @@ uint8_t	EOR_ABS(_6502 *mos6502) {
 	3 Bytes, 6 Cycles
 */
 uint8_t	LSR_ABS(_6502 *mos6502) {
+	//printf("LSR_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 8 | low_byte);
@@ -764,6 +826,7 @@ uint8_t	LSR_ABS(_6502 *mos6502) {
 	2 Bytes, 2** Cycles
 */
 uint8_t	BVC_REL(_6502 *mos6502) {
+	//printf("BVC_REL");
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'V') == 0) {
 		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
@@ -779,6 +842,7 @@ uint8_t	BVC_REL(_6502 *mos6502) {
 	2 Bytes, 5* Cycles
 */
 uint8_t	EOR_INDY(_6502 *mos6502) {
+	//printf("EOR_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -799,6 +863,7 @@ uint8_t	EOR_INDY(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	EOR_ZPX(_6502 *mos6502) {
+	//printf("EOR_ZPX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, ((0x00 << 8 | low_byte) + mos6502->X) & 0xFF);
 	mos6502->A ^= operand;
@@ -814,6 +879,7 @@ uint8_t	EOR_ZPX(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	LSR_ZPX(_6502 *mos6502) {
+	//printf("LSR_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint16_t	addr = ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF;
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, addr);
@@ -832,6 +898,7 @@ uint8_t	LSR_ZPX(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	CLI_IMP(_6502 *mos6502) {
+	//printf("CLI_IMP");
 	mos6502->set_flag(mos6502, 'I', 0);
 	mos6502->PC += 1;
 	return 2;
@@ -843,6 +910,7 @@ uint8_t	CLI_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	EOR_ABSY(_6502 *mos6502) {
+	//printf("EOR_ABSY");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t absy_addr = (high_byte << 0x8 | low_byte) + mos6502->Y;
@@ -860,6 +928,7 @@ uint8_t	EOR_ABSY(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	EOR_ABSX(_6502 *mos6502) {
+	//printf("EOR_ABSX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -877,6 +946,7 @@ uint8_t	EOR_ABSX(_6502 *mos6502) {
 	3 Bytes, 7 Cycles
 */
 uint8_t	LSR_ABSX(_6502 *mos6502) {
+	//printf("LSR_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -900,6 +970,7 @@ uint8_t	RTS_IMP(_6502 *mos6502) {
 	uint8_t low_byte = mos6502->pull(mos6502);
 	mos6502->PC = mos6502->pull(mos6502) << 8 | low_byte;
 	mos6502->PC += 1;
+	//printf("RTS_IMP");
 	return 6;
 }
 
@@ -909,6 +980,7 @@ uint8_t	RTS_IMP(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	ADC_INDX(_6502 *mos6502) {
+	//printf("ADC_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -931,6 +1003,7 @@ uint8_t	ADC_INDX(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	ADC_ZP(_6502 *mos6502) {
+	//printf("ADC_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	uint16_t res = mos6502->A + operand + mos6502->get_flag(mos6502, 'C');
@@ -949,6 +1022,7 @@ uint8_t	ADC_ZP(_6502 *mos6502) {
 	2 Bytes, 5 Cycles
 */
 uint8_t	ROR_ZP(_6502 *mos6502) {
+	//printf("ROR_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 		/*carry_in = mos6502->get_flag(mos6502, 'C');
@@ -982,6 +1056,7 @@ uint8_t	ROR_ZP(_6502 *mos6502) {
 	1 Byte, 4 Cycles
 */
 uint8_t	PLA_IMP(_6502 *mos6502) {
+	//printf("PLA_IMP");
 	mos6502->A = mos6502->pull(mos6502);
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->A & 0x80);
@@ -995,6 +1070,7 @@ uint8_t	PLA_IMP(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	ADC_IMM(_6502 *mos6502) {
+	//printf("ADC_IMM");
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint16_t res = mos6502->A + operand + mos6502->get_flag(mos6502, 'C');
 	mos6502->set_flag(mos6502, 'C', res > 255);
@@ -1018,6 +1094,7 @@ uint8_t	ADC_IMM(_6502 *mos6502) {
 	80  1 0 0 0  0 0 0 0 ->
 */
 uint8_t	ROR_ACC(_6502* mos6502) {
+	//printf("ROR_ACC");
 	uint8_t	carry_in = mos6502->get_flag(mos6502, 'C');
 
 	mos6502->set_flag(mos6502, 'C', mos6502->A & 0x1);
@@ -1037,6 +1114,7 @@ uint8_t	ROR_ACC(_6502* mos6502) {
 	3 Bytes, 5 Cycles
 */
 uint8_t	JMP_IND(_6502 *mos6502) {
+	//printf("JMP_IND");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	addr = high_byte << 0x8 | low_byte, high_addr;
@@ -1054,6 +1132,7 @@ uint8_t	JMP_IND(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	ADC_ABS(_6502 *mos6502) {
+	//printf("ADC_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -1073,6 +1152,7 @@ uint8_t	ADC_ABS(_6502 *mos6502) {
 	3 Bytes, 6 Cycles
 */
 uint8_t	ROR_ABS(_6502 *mos6502) {
+	//printf("ROR_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -1107,6 +1187,7 @@ uint8_t	ROR_ABS(_6502 *mos6502) {
 	2 Bytes, 2** Cycles
 */
 uint8_t	BVS_REL(_6502 *mos6502) {
+	//printf("BVS_REL");
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'V')) {
 		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
@@ -1122,6 +1203,7 @@ uint8_t	BVS_REL(_6502 *mos6502) {
 	2 Bytes, 5* Cycles
 */
 uint8_t	ADC_INDY(_6502 *mos6502) {
+	//printf("ADC_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -1145,6 +1227,7 @@ uint8_t	ADC_INDY(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	ADC_ZPX(_6502 *mos6502) {
+	//printf("ASC_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF);
 	uint16_t res = mos6502->A + operand + mos6502->get_flag(mos6502, 'C');
@@ -1163,6 +1246,7 @@ uint8_t	ADC_ZPX(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	ROR_ZPX(_6502 *mos6502) {
+	//printf("ROR_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint16_t	addr = ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF;
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, addr);
@@ -1197,6 +1281,7 @@ uint8_t	ROR_ZPX(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	SEI_IMP(_6502 *mos6502) {
+	//printf("SEI_IMP");
 	mos6502->set_flag(mos6502, 'I', 1);
 	mos6502->PC += 1;
 	return 2;
@@ -1208,6 +1293,7 @@ uint8_t	SEI_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	ADC_ABSY(_6502* mos6502) {
+	//printf("ADC_ABSY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2),
 		cycles = 4, operand;
@@ -1231,6 +1317,7 @@ uint8_t	ADC_ABSY(_6502* mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	ADC_ABSX(_6502 *mos6502) {
+	//printf("ADC_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2),
 		cycles = 4, operand;
@@ -1254,6 +1341,7 @@ uint8_t	ADC_ABSX(_6502 *mos6502) {
 	3 Bytes, 7 Cycles
 */
 uint8_t	ROR_ABSX(_6502 *mos6502) {
+	//printf("ROR_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -1288,6 +1376,7 @@ uint8_t	ROR_ABSX(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	STA_INDX(_6502 *mos6502) {
+	//printf("STA_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -1305,6 +1394,7 @@ uint8_t	STA_INDX(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	STY_ZP(_6502 *mos6502) {
+	//printf("STY_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->bus->write(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF, mos6502->Y);
 	mos6502->PC += 2;
@@ -1317,6 +1407,7 @@ uint8_t	STY_ZP(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	STA_ZP(_6502 *mos6502) {
+	//printf("STA_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->bus->write(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF, mos6502->A);
 	mos6502->PC += 2;
@@ -1329,6 +1420,7 @@ uint8_t	STA_ZP(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	STX_ZP(_6502 *mos6502) {
+	//printf("STX_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->bus->write(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF, mos6502->X);
 	mos6502->PC += 2;
@@ -1341,6 +1433,7 @@ uint8_t	STX_ZP(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	DEY_IMP(_6502* mos6502) {
+	//printf("DEY_IMP");
 	mos6502->Y -= 1;
 	mos6502->set_flag(mos6502, 'Z', mos6502->Y == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->Y & 0x80);
@@ -1354,6 +1447,7 @@ uint8_t	DEY_IMP(_6502* mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	TXA_IMP(_6502 *mos6502) {
+	//printf("TXA_IMP");
 	mos6502->A = mos6502->X;
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->A & 0x80);
@@ -1367,6 +1461,7 @@ uint8_t	TXA_IMP(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	STY_ABS(_6502 *mos6502) {
+	//printf("STY_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->bus->write(mos6502->bus->ram, high_byte << 0x8 | low_byte, mos6502->Y);
@@ -1380,6 +1475,7 @@ uint8_t	STY_ABS(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	STA_ABS(_6502 *mos6502) {
+	//printf("STA_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->bus->write(mos6502->bus->ram, high_byte << 0x8 | low_byte, mos6502->A);
@@ -1396,6 +1492,7 @@ uint8_t	STX_ABS(_6502 *mos6502) {
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->bus->write(mos6502->bus->ram, high_byte << 0x8 | low_byte, mos6502->X);
+	//printf("STX_ABS");
 	mos6502->PC += 3;
 	return 4;
 }
@@ -1406,6 +1503,7 @@ uint8_t	STX_ABS(_6502 *mos6502) {
 	2 Bytes, 2** Cycles
 */
 uint8_t	BCC_REL(_6502 *mos6502) {
+	//printf("BCC_REL");
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'C') == 0) {
 		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
@@ -1421,6 +1519,7 @@ uint8_t	BCC_REL(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	STA_INDY(_6502 *mos6502) {
+	//printf("STA_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -1438,6 +1537,7 @@ uint8_t	STA_INDY(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	STY_ZPX(_6502 *mos6502) {
+	//printf("STY_ZPX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->bus->write(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF, mos6502->Y);
 	mos6502->PC += 2;
@@ -1450,6 +1550,7 @@ uint8_t	STY_ZPX(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	STA_ZPX(_6502 *mos6502) {
+	//printf("STA_ZPX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->bus->write(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF, mos6502->A);
 	mos6502->PC += 2;
@@ -1462,6 +1563,7 @@ uint8_t	STA_ZPX(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	STX_ZPY(_6502 *mos6502) {
+	//printf("STX_ZPY");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->bus->write(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->Y) & 0xFF, mos6502->X);
 	mos6502->PC += 2;
@@ -1474,6 +1576,7 @@ uint8_t	STX_ZPY(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	TYA_IMP(_6502 *mos6502) {
+	//printf("TYA_IMP");
 	mos6502->A = mos6502->Y;
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->A & 0x80);
@@ -1487,6 +1590,7 @@ uint8_t	TYA_IMP(_6502 *mos6502) {
 	3 Bytes, 5 Cycles
 */
 uint8_t	STA_ABSY(_6502 *mos6502) {
+	//printf("STA_ABSY");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->bus->write(mos6502->bus->ram, (high_byte << 0x8 | low_byte) + mos6502->Y, mos6502->A);
@@ -1500,6 +1604,7 @@ uint8_t	STA_ABSY(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	TXS_IMP(_6502 *mos6502) {
+	//printf("TXS_IMP");
 	mos6502->SP = mos6502->X;
 	mos6502->PC += 1;
 	return 2;
@@ -1511,6 +1616,7 @@ uint8_t	TXS_IMP(_6502 *mos6502) {
 	3 Bytes, 5 Cycles
 */
 uint8_t	STA_ABSX(_6502 *mos6502) {
+	//printf("STA_ABSX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	mos6502->bus->write(mos6502->bus->ram, (high_byte << 0x8 | low_byte) + mos6502->X, mos6502->A);
@@ -1524,6 +1630,7 @@ uint8_t	STA_ABSX(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	LDY_IMM(_6502 *mos6502) {
+	//printf("LDY_IMM");
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->Y = operand;
 	mos6502->set_flag(mos6502, 'Z', mos6502->Y == 0);
@@ -1538,6 +1645,7 @@ uint8_t	LDY_IMM(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	LDA_INDX(_6502 *mos6502) {
+	//printf("LDA_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -1558,6 +1666,7 @@ uint8_t	LDA_INDX(_6502 *mos6502) {
 uint8_t	LDX_IMM(_6502 *mos6502) {
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->X = operand;
+	//printf("LDX_IMM");
 	mos6502->set_flag(mos6502, 'Z', mos6502->X == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->X & 0x80);
 	mos6502->PC += 2;
@@ -1570,6 +1679,7 @@ uint8_t	LDX_IMM(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	LDY_ZP(_6502 *mos6502) {
+	//printf("LDY_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	mos6502->Y = operand;
@@ -1585,6 +1695,7 @@ uint8_t	LDY_ZP(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	LDA_ZP(_6502 *mos6502) {
+	//printf("LDA_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	mos6502->A = operand;
@@ -1600,6 +1711,7 @@ uint8_t	LDA_ZP(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	LDX_ZP(_6502 *mos6502) {
+	//printf("LDX_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	mos6502->X = operand;
@@ -1615,6 +1727,7 @@ uint8_t	LDX_ZP(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	TAY_IMP(_6502 *mos6502) {
+	//printf("TAY_IMP");
 	mos6502->Y = mos6502->A;
 	mos6502->set_flag(mos6502, 'Z', mos6502->Y == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->Y & 0x80);
@@ -1630,6 +1743,7 @@ uint8_t	TAY_IMP(_6502 *mos6502) {
 uint8_t	LDA_IMM(_6502 *mos6502) {
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->A = operand;
+	//printf("LDA_IMM");
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->A & 0x80);
 	mos6502->PC += 2;
@@ -1642,6 +1756,7 @@ uint8_t	LDA_IMM(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	TAX_IMP(_6502 *mos6502) {
+	//printf("TAX_IMP");
 	mos6502->X = mos6502->A;
 	mos6502->set_flag(mos6502, 'Z', mos6502->X == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->X & 0x80);
@@ -1655,6 +1770,7 @@ uint8_t	TAX_IMP(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	LDY_ABS(_6502 *mos6502) {
+	//printf("LDY_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2),
 		operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -1675,8 +1791,12 @@ uint8_t	LDA_ABS(_6502 *mos6502) {
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2),
 		operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
 	mos6502->A = operand;
+	//printf("LDA_ABS");
+	////printf("LDA_ABS $%04X = %02X(%u)", high_byte << 0x8 | low_byte, operand, operand);
 	mos6502->set_flag(mos6502, 'Z', mos6502->A == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->A & 0x80);
+	/*//printf(" Z: %u, N: %u", mos6502->get_flag(mos6502, 'Z'),
+		mos6502->get_flag(mos6502, 'N'));*/
 	mos6502->PC += 3;
 	return 4;
 }
@@ -1687,6 +1807,7 @@ uint8_t	LDA_ABS(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	LDX_ABS(_6502 *mos6502) {
+	//printf("LDX_ABS");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2),
 		operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -1703,6 +1824,7 @@ uint8_t	LDX_ABS(_6502 *mos6502) {
 	2 Bytes, 2** Cycles
 */
 uint8_t	BCS_REL(_6502 *mos6502) {
+	//printf("BCS_REL");
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'C')) {
 		int8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
@@ -1718,6 +1840,7 @@ uint8_t	BCS_REL(_6502 *mos6502) {
 	2 Bytes, 5* Cycles
 */
 uint8_t	LDA_INDY(_6502 *mos6502) {
+	//printf("LDA_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -1738,6 +1861,7 @@ uint8_t	LDA_INDY(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	LDY_ZPX(_6502 *mos6502) {
+	//printf("LDY_ZPX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (low_byte + mos6502->X) & 0xFF);
 	mos6502->Y = operand;
@@ -1753,6 +1877,7 @@ uint8_t	LDY_ZPX(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	LDA_ZPX(_6502 *mos6502) {
+	//printf("LDA_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF);
 	mos6502->A = operand;
@@ -1768,6 +1893,7 @@ uint8_t	LDA_ZPX(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	LDX_ZPY(_6502 *mos6502) {
+	//printf("LDX_ZPY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->Y) & 0xFF);
 	mos6502->X = operand;
@@ -1783,6 +1909,7 @@ uint8_t	LDX_ZPY(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	CLV_IMP(_6502 *mos6502) {
+	//printf("CLV_IMP");
 	mos6502->set_flag(mos6502, 'V', 0);
 	mos6502->PC += 1;
 	return 2;
@@ -1794,6 +1921,7 @@ uint8_t	CLV_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	LDA_ABSY(_6502 *mos6502) {
+	//printf("LDA_ABSY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t	absy_addr = (high_byte << 0x8 | low_byte) + mos6502->Y;
@@ -1812,6 +1940,7 @@ uint8_t	LDA_ABSY(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	TSX_IMP(_6502 *mos6502) {
+	//printf("TSX_IMP");
 	mos6502->X = mos6502->SP;
 	mos6502->set_flag(mos6502, 'Z', mos6502->X == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->X & 0x80);
@@ -1825,6 +1954,7 @@ uint8_t	TSX_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	LDY_ABSX(_6502 *mos6502) {
+	//printf("LDY_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -1843,6 +1973,7 @@ uint8_t	LDY_ABSX(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	LDA_ABSX(_6502 *mos6502) {
+	//printf("LDA_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -1861,6 +1992,7 @@ uint8_t	LDA_ABSX(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	LDX_ABSY(_6502 *mos6502) {
+	//printf("LDX_ABSY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t	absy_addr = (high_byte << 0x8 | low_byte) + mos6502->Y;
@@ -1879,6 +2011,7 @@ uint8_t	LDX_ABSY(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	CPY_IMM(_6502 *mos6502) {
+	//printf("CPY_IMM");
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint8_t res = mos6502->Y - operand;
 	mos6502->set_flag(mos6502, 'C', mos6502->Y >= operand);
@@ -1894,6 +2027,7 @@ uint8_t	CPY_IMM(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	CMP_INDX(_6502 *mos6502) {
+	//printf("CMP_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -1913,6 +2047,7 @@ uint8_t	CMP_INDX(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	CPY_ZP(_6502 *mos6502) {
+	//printf("CPY_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	uint8_t res = mos6502->Y - operand;
@@ -1929,6 +2064,7 @@ uint8_t	CPY_ZP(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	CMP_ZP(_6502 *mos6502) {
+	//printf("CMP_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	uint8_t res = mos6502->A - operand;
@@ -1945,6 +2081,7 @@ uint8_t	CMP_ZP(_6502 *mos6502) {
 	2 Bytes, 5 Cycles
 */
 uint8_t	DEC_ZP(_6502 *mos6502) {
+	//printf("DEC_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	operand -= 1;
@@ -1961,6 +2098,7 @@ uint8_t	DEC_ZP(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	INY_IMP(_6502 *mos6502) {
+	//printf("INY_IMP");
 	mos6502->Y += 1;
 	mos6502->set_flag(mos6502, 'Z', mos6502->Y == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->Y & 0x80);
@@ -1974,6 +2112,7 @@ uint8_t	INY_IMP(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	CMP_IMM(_6502 *mos6502) {
+	//printf("CMP_IMM");
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	mos6502->set_flag(mos6502, 'C', mos6502->A >= operand);
 	uint8_t res = mos6502->A - operand;
@@ -1989,6 +2128,7 @@ uint8_t	CMP_IMM(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	DEX_IMP(_6502 *mos6502) {
+	//printf("DEX_IMP");
 	mos6502->X -= 1;
 	mos6502->set_flag(mos6502, 'Z', mos6502->X == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->X & 0x80);
@@ -2002,6 +2142,7 @@ uint8_t	DEX_IMP(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	CPY_ABS(_6502 *mos6502) {
+	//printf("CPY_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 8 | low_byte);
@@ -2019,6 +2160,7 @@ uint8_t	CPY_ABS(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	CMP_ABS(_6502 *mos6502) {
+	//printf("CMP_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -2036,6 +2178,7 @@ uint8_t	CMP_ABS(_6502 *mos6502) {
 	3 Bytes, 6 Cycles
 */
 uint8_t	DEC_ABS(_6502 *mos6502) {
+	//printf("DEC_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -2053,6 +2196,7 @@ uint8_t	DEC_ABS(_6502 *mos6502) {
 	2 Bytes, 2** Cycles
 */
 uint8_t	BNE_REL(_6502 *mos6502) {
+	//printf("BNE_REL");
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'Z') == 0) {
 		int8_t operand = (int8_t)mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
@@ -2068,6 +2212,7 @@ uint8_t	BNE_REL(_6502 *mos6502) {
 	2 Bytes, 5* Cycles
 */
 uint8_t	CMP_INDY(_6502 *mos6502) {
+	//printf("CMP_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -2089,6 +2234,7 @@ uint8_t	CMP_INDY(_6502 *mos6502) {
 	2 Bytes, 4 Cycles	
 */
 uint8_t	CMP_ZPX(_6502 *mos6502) {
+	//printf("CMP_ZPX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF);
 	uint8_t res = mos6502->A - operand;
@@ -2105,6 +2251,7 @@ uint8_t	CMP_ZPX(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	DEC_ZPX(_6502 *mos6502) {
+	//printf("DEC_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint16_t	addr = ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF;
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, addr);
@@ -2122,6 +2269,7 @@ uint8_t	DEC_ZPX(_6502 *mos6502) {
 	1 Bytes, 2 Cycles
 */
 uint8_t	CLD_IMP(_6502 *mos6502) {
+	//printf("CLD_IMP");
 	mos6502->set_flag(mos6502, 'D', 0);
 	mos6502->PC += 1;
 	return 2;
@@ -2133,6 +2281,7 @@ uint8_t	CLD_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	CMP_ABSY(_6502 *mos6502) {
+	//printf("CMP_ABSY");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t	absy_addr = (high_byte << 0x8 | low_byte) + mos6502->Y;
@@ -2152,6 +2301,7 @@ uint8_t	CMP_ABSY(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	CMP_ABSX(_6502 *mos6502) {
+	//printf("CMP_ABSX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2), cycles = 4;
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -2171,6 +2321,7 @@ uint8_t	CMP_ABSX(_6502 *mos6502) {
 	3 Bytes, 7 Cycles
 */
 uint8_t	DEC_ABSX(_6502 *mos6502) {
+	//printf("DEC_ABSX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -2189,6 +2340,7 @@ uint8_t	DEC_ABSX(_6502 *mos6502) {
 	2 Bytes, 2 Cycles
 */
 uint8_t	CPX_IMM(_6502 *mos6502) {
+	//printf("CPX_IMM");
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint8_t res = mos6502->X - operand;
 	mos6502->set_flag(mos6502, 'C', mos6502->X >= operand);
@@ -2204,6 +2356,7 @@ uint8_t	CPX_IMM(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	SBC_INDX(_6502 *mos6502) {
+	//printf("SBC_INDX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = (low_byte + mos6502->X) & 0xFF;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -2228,6 +2381,7 @@ uint8_t	SBC_INDX(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	CPX_ZP(_6502 *mos6502) {
+	//printf("CPX_ZP");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 0x8 | low_byte) & 0xFF);
 	uint8_t res = mos6502->X - operand;
@@ -2244,6 +2398,7 @@ uint8_t	CPX_ZP(_6502 *mos6502) {
 	2 Bytes, 3 Cycles
 */
 uint8_t	SBC_ZP(_6502 *mos6502) {
+	//printf("SBC_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 8 | low_byte) & 0xFF);
 	uint8_t old_a = mos6502->A;
@@ -2263,6 +2418,7 @@ uint8_t	SBC_ZP(_6502 *mos6502) {
 	2 Bytes, 5 Cycles
 */
 uint8_t	INC_ZP(_6502 *mos6502) {
+	//printf("INC_ZP");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, (0x00 << 8 | low_byte) & 0xFF);
 	operand += 1;
@@ -2279,6 +2435,7 @@ uint8_t	INC_ZP(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	INX_IMP(_6502 *mos6502) {
+	//printf("INX_IMP");
 	mos6502->X += 1;
 	mos6502->set_flag(mos6502, 'Z', mos6502->X == 0);
 	mos6502->set_flag(mos6502, 'N', mos6502->X & 0x80);
@@ -2293,6 +2450,7 @@ uint8_t	INX_IMP(_6502 *mos6502) {
 */
 
 uint8_t	SBC_IMM(_6502 *mos6502) {
+	//printf("SBC_IMM");
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint8_t old_a = mos6502->A;
 	uint16_t temp = mos6502->A - operand - (1 - mos6502->get_flag(mos6502, 'C'));
@@ -2311,6 +2469,7 @@ uint8_t	SBC_IMM(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	NOP_IMP(_6502 *mos6502) {
+	//printf("NOP_IMP");
 	mos6502->PC += 1;
 	return 2;
 }
@@ -2321,6 +2480,7 @@ uint8_t	NOP_IMP(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	CPX_ABS(_6502 *mos6502) {
+	//printf("CPX_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -2338,6 +2498,7 @@ uint8_t	CPX_ABS(_6502 *mos6502) {
 	3 Bytes, 4 Cycles
 */
 uint8_t	SBC_ABS(_6502 *mos6502) {
+	//printf("SBC_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -2359,6 +2520,7 @@ uint8_t	SBC_ABS(_6502 *mos6502) {
 	3 Bytes, 6 Cycles
 */
 uint8_t	INC_ABS(_6502 *mos6502) {
+	//printf("INC_ABS");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint8_t operand = mos6502->bus->read(mos6502->bus->ram, high_byte << 0x8 | low_byte);
@@ -2376,6 +2538,7 @@ uint8_t	INC_ABS(_6502 *mos6502) {
 	2 Bytes, 2** Cycles
 */
 uint8_t	BEQ_REL(_6502 *mos6502) {
+	//printf("BEQ_REL");
 	mos6502->PC += 2;
 	if (mos6502->get_flag(mos6502, 'Z')) {
 		int8_t operand = (int8_t)mos6502->bus->read(mos6502->bus->ram, mos6502->PC-1);
@@ -2391,6 +2554,7 @@ uint8_t	BEQ_REL(_6502 *mos6502) {
 	2 Bytes, 5* Cycles
 */
 uint8_t	SBC_INDY(_6502 *mos6502) {
+	//printf("SBC_INDY");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1), high_byte;
 	uint8_t	base = 0x00 << 0x8 | low_byte, cycles = 5;
 	low_byte = mos6502->bus->read(mos6502->bus->ram, base);
@@ -2417,6 +2581,7 @@ uint8_t	SBC_INDY(_6502 *mos6502) {
 	2 Bytes, 4 Cycles
 */
 uint8_t	SBC_ZPX(_6502 *mos6502) {
+	//printf("SBC_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 		operand = mos6502->bus->read(mos6502->bus->ram, ((0x00 << 8 | low_byte) + mos6502->X) & 0xFF);
 	
@@ -2438,6 +2603,7 @@ uint8_t	SBC_ZPX(_6502 *mos6502) {
 	2 Bytes, 6 Cycles
 */
 uint8_t	INC_ZPX(_6502 *mos6502) {
+	//printf("INC_ZPX");
 	uint8_t	low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1);
 	uint16_t	addr = ((0x00 << 0x8 | low_byte) + mos6502->X) & 0xFF;
 	uint8_t	operand = mos6502->bus->read(mos6502->bus->ram, addr);
@@ -2455,6 +2621,7 @@ uint8_t	INC_ZPX(_6502 *mos6502) {
 	1 Byte, 2 Cycles
 */
 uint8_t	SED_IMP(_6502 *mos6502) {
+	//printf("SED_IMP");
 	mos6502->set_flag(mos6502, 'D', 1);
 	mos6502->PC += 1;
 	return 2;
@@ -2466,6 +2633,7 @@ uint8_t	SED_IMP(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	SBC_ABSY(_6502 *mos6502) {
+	//printf("SBC_ABSY");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2),
 	        cycles = 4;
@@ -2492,6 +2660,7 @@ uint8_t	SBC_ABSY(_6502 *mos6502) {
 	3 Bytes, 4* Cycles
 */
 uint8_t	SBC_ABSX(_6502 *mos6502) {
+	//printf("SBC_ABSX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2),
 	        cycles = 4;
@@ -2518,6 +2687,7 @@ uint8_t	SBC_ABSX(_6502 *mos6502) {
 	3 Bytes, 7 Cycles
 */
 uint8_t	INC_ABSX(_6502 *mos6502) {
+	//printf("INC_ABSX");
 	uint8_t low_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+1),
 	        high_byte = mos6502->bus->read(mos6502->bus->ram, mos6502->PC+2);
 	uint16_t	absx_addr = (high_byte << 0x8 | low_byte) + mos6502->X;
@@ -2535,642 +2705,749 @@ uint8_t	INC_ABSX(_6502 *mos6502) {
 
 /*  op0x02, 2By, 2Cy */
 uint8_t   OP_02(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x03, 2By, 8Cy */
 uint8_t   OP_03(_6502 *mos6502) {
+	//printf("*SLO");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x04, 2By, 3Cy */
 uint8_t   OP_04(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 3;
 }
 
 /*  op0x07, 2By, 5Cy */
 uint8_t   OP_07(_6502 *mos6502) {
+	//printf("*SLO");
 	mos6502->PC += 2;
 	return 5;
 }
 
 /*  op0x0B, 2By, 2Cy */
 uint8_t   OP_0B(_6502 *mos6502) {
+	//printf("*ANC");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x0C, 3By, 4Cy */
 uint8_t   OP_0C(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0x0F, 3By, 6Cy */
 uint8_t   OP_0F(_6502 *mos6502) {
+	//printf("*SLO");
 	mos6502->PC += 3;
 	return 6;
 }
 
 /*  op0x12, 2By, 2Cy */
 uint8_t   OP_12(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x13, 2By, 8Cy */
 uint8_t   OP_13(_6502 *mos6502) {
+	//printf("*SLO");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x14, 2By, 4Cy */
 uint8_t   OP_14(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0x17, 2By, 6Cy */
 uint8_t   OP_17(_6502 *mos6502) {
+	//printf("*SLO");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0x1A, 1By, 2Cy */
 uint8_t   OP_1A(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 1;
 	return 2;
 }
 
 /*  op0x1B, 3By, 7Cy */
 uint8_t   OP_1B(_6502 *mos6502) {
+	//printf("*SLO");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x1C, 3By, 4Cy */
 uint8_t   OP_1C(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0x1F, 3By, 7Cy */
 uint8_t   OP_1F(_6502 *mos6502) {
+	//printf("*SLO");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x22, 2By, 2Cy */
 uint8_t   OP_22(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x23, 2By, 8Cy */
 uint8_t   OP_23(_6502 *mos6502) {
+	//printf("*RLA");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x27, 2By, 5Cy */
 uint8_t   OP_27(_6502 *mos6502) {
+	//printf("*RLA");
 	mos6502->PC += 2;
 	return 5;
 }
 
 /*  op0x2B, 2By, 2Cy */
 uint8_t   OP_2B(_6502 *mos6502) {
+	//printf("*ANC");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x2F, 3By, 6Cy */
 uint8_t   OP_2F(_6502 *mos6502) {
+	//printf("*RLA");
 	mos6502->PC += 3;
 	return 6;
 }
 
 /*  op0x32, 2By, 2Cy */
 uint8_t   OP_32(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x33, 2By, 8Cy */
 uint8_t   OP_33(_6502 *mos6502) {
+	//printf("*RLA");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x34, 2By, 4Cy */
 uint8_t   OP_34(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0x37, 2By, 6Cy */
 uint8_t   OP_37(_6502 *mos6502) {
+	//printf("*RLA");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0x3A, 1By, 2Cy */
 uint8_t   OP_3A(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 1;
 	return 2;
 }
 
 /*  op0x3B, 3By, 7Cy */
 uint8_t   OP_3B(_6502 *mos6502) {
+	//printf("*RLA");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x3C, 3By, 4Cy */
 uint8_t   OP_3C(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0x3F, 3By, 7Cy */
 uint8_t   OP_3F(_6502 *mos6502) {
+	//printf("*RLA");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x42, 2By, 2Cy */
 uint8_t   OP_42(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x43, 2By, 8Cy */
 uint8_t   OP_43(_6502 *mos6502) {
+	//printf("*SRE");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x44, 2By, 3Cy */
 uint8_t   OP_44(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 3;
 }
 
 /*  op0x47, 2By, 5Cy */
 uint8_t   OP_47(_6502 *mos6502) {
+	//printf("*SRE");
 	mos6502->PC += 2;
 	return 5;
 }
 
 /*  op0x4B, 2By, 2Cy */
 uint8_t   OP_4B(_6502 *mos6502) {
+	//printf("*ALR");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x4F, 3By, 6Cy */
 uint8_t   OP_4F(_6502 *mos6502) {
+	//printf("*SRE");
 	mos6502->PC += 3;
 	return 6;
 }
 
 /*  op0x52, 2By, 2Cy */
 uint8_t   OP_52(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x53, 2By, 8Cy */
 uint8_t   OP_53(_6502 *mos6502) {
+	//printf("*SRE");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x54, 2By, 4Cy */
 uint8_t   OP_54(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0x57, 2By, 6Cy */
 uint8_t   OP_57(_6502 *mos6502) {
+	//printf("*SRE");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0x5A, 1By, 2Cy */
 uint8_t   OP_5A(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 1;
 	return 2;
 }
 
 /*  op0x5B, 3By, 7Cy */
 uint8_t   OP_5B(_6502 *mos6502) {
+	//printf("*SRE");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x5C, 3By, 4Cy */
 uint8_t   OP_5C(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0x5F, 3By, 7Cy */
 uint8_t   OP_5F(_6502 *mos6502) {
+	//printf("*SRE");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x62, 2By, 2Cy */
 uint8_t   OP_62(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x63, 2By, 8Cy */
 uint8_t   OP_63(_6502 *mos6502) {
+	//printf("*RRA");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x64, 2By, 3Cy */
 uint8_t   OP_64(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 3;
 }
 
 /*  op0x67, 2By, 5Cy */
 uint8_t   OP_67(_6502 *mos6502) {
+	//printf("*RRA");
 	mos6502->PC += 2;
 	return 5;
 }
 
 /*  op0x6B, 2By, 2Cy */
 uint8_t   OP_6B(_6502 *mos6502) {
+	//printf("*ARR");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x6F, 3By, 6Cy */
 uint8_t   OP_6F(_6502 *mos6502) {
+	//printf("*RRA");
 	mos6502->PC += 3;
 	return 6;
 }
 
 /*  op0x72, 2By, 2Cy */
 uint8_t   OP_72(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x73, 2By, 8Cy */
 uint8_t   OP_73(_6502 *mos6502) {
+	//printf("*RRA");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0x74, 2By, 4Cy */
 uint8_t   OP_74(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0x77, 2By, 6Cy */
 uint8_t   OP_77(_6502 *mos6502) {
+	//printf("*RRA");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0x7A, 1By, 2Cy */
 uint8_t   OP_7A(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 1;
 	return 2;
 }
 
 /*  op0x7B, 3By, 7Cy */
 uint8_t   OP_7B(_6502 *mos6502) {
+	//printf("*RRA");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x7C, 3By, 4Cy */
 uint8_t   OP_7C(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0x7F, 3By, 7Cy */
 uint8_t   OP_7F(_6502 *mos6502) {
+	//printf("*RRA");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0x80, 2By, 2Cy */
 uint8_t   OP_80(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x82, 2By, 2Cy */
 uint8_t   OP_82(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x83, 2By, 6Cy */
 uint8_t   OP_83(_6502 *mos6502) {
+	//printf("*SAX");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0x87, 2By, 3Cy */
 uint8_t   OP_87(_6502 *mos6502) {
+	//printf("*SAX");
 	mos6502->PC += 2;
 	return 3;
 }
 
 /*  op0x89, 2By, 2Cy */
 uint8_t   OP_89(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x8B, 2By, 2Cy */
 uint8_t   OP_8B(_6502 *mos6502) {
+	//printf("*XAA");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x8F, 3By, 4Cy */
 uint8_t   OP_8F(_6502 *mos6502) {
+	//printf("*SAX");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0x92, 2By, 2Cy */
 uint8_t   OP_92(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0x93, 2By, 6Cy */
 uint8_t   OP_93(_6502 *mos6502) {
+	//printf("*SHA");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0x94, 2By, 4Cy */
 uint8_t   OP_94(_6502 *mos6502) {
+	//printf("*STY");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0x97, 2By, 4Cy */
 uint8_t   OP_97(_6502 *mos6502) {
+	//printf("*SAX");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0x9B, 3By, 5Cy */
 uint8_t   OP_9B(_6502 *mos6502) {
+	//printf("*TAS");
 	mos6502->PC += 3;
 	return 5;
 }
 
 /*  op0x9C, 3By, 5Cy */
 uint8_t   OP_9C(_6502 *mos6502) {
+	//printf("*SHY");
 	mos6502->PC += 3;
 	return 5;
 }
 
 /*  op0x9E, 3By, 5Cy */
 uint8_t   OP_9E(_6502 *mos6502) {
+	//printf("*SHX");
 	mos6502->PC += 3;
 	return 5;
 }
 
 /*  op0x9F, 3By, 5Cy */
 uint8_t   OP_9F(_6502 *mos6502) {
+	//printf("*SHA");
 	mos6502->PC += 3;
 	return 5;
 }
 
 /*  op0xA3, 2By, 6Cy */
 uint8_t   OP_A3(_6502 *mos6502) {
+	//printf("*LAX");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0xA7, 2By, 3Cy */
 uint8_t   OP_A7(_6502 *mos6502) {
+	//printf("*LAX");
 	mos6502->PC += 2;
 	return 3;
 }
 
 /*  op0xAB, 2By, 2Cy */
 uint8_t   OP_AB(_6502 *mos6502) {
+	//printf("*LAX");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xAF, 3By, 4Cy */
 uint8_t   OP_AF(_6502 *mos6502) {
+	//printf("*LAX");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0xB2, 2By, 2Cy */
 uint8_t   OP_B2(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xB3, 2By, 5Cy */
 uint8_t   OP_B3(_6502 *mos6502) {
+	//printf("*LAX");
 	mos6502->PC += 2;
 	return 5;
 }
 
 /*  op0xB4, 2By, 4Cy */
 uint8_t   OP_B4(_6502 *mos6502) {
+	//printf("*LDY");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0xB7, 2By, 4Cy */
 uint8_t   OP_B7(_6502 *mos6502) {
+	//printf("*LAX");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0xBB, 3By, 4Cy */
 uint8_t   OP_BB(_6502 *mos6502) {
+	//printf("*LAS");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0xBF, 3By, 4Cy */
 uint8_t   OP_BF(_6502 *mos6502) {
+	//printf("*LAX");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0xC2, 2By, 2Cy */
 uint8_t   OP_C2(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xC3, 2By, 8Cy */
 uint8_t   OP_C3(_6502 *mos6502) {
+	//printf("*DCP");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0xC7, 2By, 5Cy */
 uint8_t   OP_C7(_6502 *mos6502) {
+	//printf("*DCP");
 	mos6502->PC += 2;
 	return 5;
 }
 
 /*  op0xCB, 2By, 2Cy */
 uint8_t   OP_CB(_6502 *mos6502) {
+	//printf("*AXS");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xCF, 3By, 6Cy */
 uint8_t   OP_CF(_6502 *mos6502) {
+	//printf("*DCP");
 	mos6502->PC += 3;
 	return 6;
 }
 
 /*  op0xD2, 2By, 2Cy */
 uint8_t   OP_D2(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xD3, 2By, 8Cy */
 uint8_t   OP_D3(_6502 *mos6502) {
+	//printf("*DCP");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0xD4, 2By, 4Cy */
 uint8_t   OP_D4(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0xD7, 2By, 6Cy */
 uint8_t   OP_D7(_6502 *mos6502) {
+	//printf("*DCP");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0xDA, 1By, 2Cy */
 uint8_t   OP_DA(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 1;
 	return 2;
 }
 
 /*  op0xDB, 3By, 7Cy */
 uint8_t   OP_DB(_6502 *mos6502) {
+	//printf("*DCP");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0xDC, 3By, 4Cy */
 uint8_t   OP_DC(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0xDF, 3By, 7Cy */
 uint8_t   OP_DF(_6502 *mos6502) {
+	//printf("*DCP");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0xE2, 2By, 2Cy */
 uint8_t   OP_E2(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xE3, 2By, 8Cy */
 uint8_t   OP_E3(_6502 *mos6502) {
+	//printf("*ISC");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0xE7, 2By, 5Cy */
 uint8_t   OP_E7(_6502 *mos6502) {
+	//printf("*ISC");
 	mos6502->PC += 2;
 	return 5;
 }
 
 /*  op0xEB, 2By, 2Cy */
 uint8_t   OP_EB(_6502 *mos6502) {
+	//printf("*SBC");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xEF, 3By, 6Cy */
 uint8_t   OP_EF(_6502 *mos6502) {
+	//printf("*ISC");
 	mos6502->PC += 3;
 	return 6;
 }
 
 /*  op0xF2, 2By, 2Cy */
 uint8_t   OP_F2(_6502 *mos6502) {
+	//printf("*KIL/JAM");
 	mos6502->PC += 2;
 	return 2;
 }
 
 /*  op0xF3, 2By, 8Cy */
 uint8_t   OP_F3(_6502 *mos6502) {
+	//printf("*ISC");
 	mos6502->PC += 2;
 	return 8;
 }
 
 /*  op0xF4, 2By, 4Cy */
 uint8_t   OP_F4(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 2;
 	return 4;
 }
 
 /*  op0xF7, 2By, 6Cy */
 uint8_t   OP_F7(_6502 *mos6502) {
+	//printf("*ISC");
 	mos6502->PC += 2;
 	return 6;
 }
 
 /*  op0xFA, 1By, 2Cy */
 uint8_t   OP_FA(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 1;
 	return 2;
 }
 
 /*  op0xFB, 3By, 7Cy */
 uint8_t   OP_FB(_6502 *mos6502) {
+	//printf("*ISC");
 	mos6502->PC += 3;
 	return 7;
 }
 
 /*  op0xFC, 3By, 4Cy */
 uint8_t   OP_FC(_6502 *mos6502) {
+	//printf("*NOP");
 	mos6502->PC += 3;
 	return 4;
 }
 
 /*  op0xFF, 3By, 7Cy */
 uint8_t   OP_FF(_6502 *mos6502) {
+	//printf("*ISC");
 	mos6502->PC += 3;
 	return 7;
 }
