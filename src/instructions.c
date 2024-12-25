@@ -6,13 +6,25 @@
 	BRK - op0x00
 	IMPLIED
 	1 Byte, 7 Cycles
-
-	standalone mos6502 natural stopping point
-	*from an emulator perspective
 */
 uint8_t	BRK_IMP(_6502* mos6502) {
-	(void)mos6502;
-	return 0;
+	mos6502->PC++;
+	uint8_t	brk_vector_low = mos6502->bus->read(mos6502->bus->ram, IRQ_BRK);
+	uint8_t	brk_vector_high = mos6502->bus->read(mos6502->bus->ram, IRQ_BRK + 1);
+
+	mos6502->push(mos6502, mos6502->PC >> 8);
+	mos6502->push(mos6502, mos6502->PC & 0x00FF);
+	mos6502->set_flag(mos6502, 'B', 1);
+	mos6502->push(mos6502, mos6502->SR);
+	mos6502->set_flag(mos6502, 'I', 1);
+
+	// software interrupt is program responsiblity
+	if (!brk_vector_low && !brk_vector_high) {
+		return 0;
+	}
+
+	mos6502->PC = brk_vector_high << 8 | brk_vector_low;
+	return 7;
 }
 
 /*
@@ -147,6 +159,10 @@ uint8_t	ASL_ABS(_6502* mos6502) {
 	BPL - op0x10
 	RELATIVE
 	2 Bytes, 2** Cycles
+
+	     N V A B  D I Z C
+	164  1 0 1 0  0 1 0 0
+	38   0 0 1 0  0 1 0 0
 */
 uint8_t	BPL_REL(_6502 *mos6502) {
 	mos6502->PC += 2;
