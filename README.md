@@ -11,7 +11,7 @@ This emulator uses a jump-table design,<br>
 where the opcode value (e.g., 0x80) directly indexes a function pointer table.<br>
 Each entry in the table points to a function that replicates the behavior of the corresponding 6502 instruction.
 
-all the 13 addressing modes are emulated:
+Binary Coded Decimal (BCD) mode is fully supported, along with all 13 addressing modes:
 
 ```
 IMPLIED
@@ -90,5 +90,5 @@ allowing for real-time observation of the CPU behavior
 ```
 
 ## upcoming features
-- full illegal opcodes implementation
-- decimal mode support
+- full illegal opcodes implementation (partial progress)
+- decimal mode support (now added)
