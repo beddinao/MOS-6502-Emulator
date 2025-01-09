@@ -33,6 +33,11 @@ uint8_t	stack_pull(_6502 *mos6502) {
 void	set_flag(_6502 *mos6502, uint8_t pos, uint8_t bit) {
 	uint8_t	sr = mos6502->SR;
 	switch (pos) {
+		// N V A B  D I Z C
+		//
+		// 1 1 1 1  0 0 0 0 <-
+		// 1 1 1 1  0 0 0 1 -->
+		//
 		case 'N':	bit ? (sr|=0x80) : (sr&=~0x80); break;
 		case 'V': bit ? (sr|=0x40) : (sr&=~0x40); break;
 		case 'A': bit ? (sr|=0x20) : (sr&=~0x20); break;
