@@ -38,7 +38,7 @@ Illegal opcodes are not implemented, and executing them will only increments the
 
 ## main loop
 classic fetch-decode-execute cycle:
-```
+```c
 while (1)
 {
   // fetch
@@ -59,7 +59,7 @@ such as the Commodore 64, NES, Atari, or Apple II.<br>
 - dedicated "production" branch, which excludes visualization features.
 - bus implementation to connect the CPU with RAM, ROM, and other devices.
 
-```
+```c
 typedef	struct _bus {
   uint8_t     ram[ADDR_RANGE];
   uint8_t     rom[ADDR_RANGE];
