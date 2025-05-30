@@ -116,7 +116,7 @@ void	*print_state(void *p) {
 			x_index = print_field(x_start, y_index, ram_addr, "", res);
 			mvaddstr(y_index, x_index++, ":");
 			for (unsigned col = 0; col < width && ram_addr + col < STACK_END; col++) {
-				color_mode = (ram_addr + col == mos6502->SP + STACK_START) ? 2 : 1;
+				color_mode = (ram_addr + col == (unsigned)(mos6502->SP + STACK_START)) ? 2 : 1;
 				attron(COLOR_PAIR(color_mode));
 				x_index = print_field(x_index, y_index, mos6502->bus->ram[ram_addr + col], " ", res);
 				attroff(COLOR_PAIR(color_mode));
