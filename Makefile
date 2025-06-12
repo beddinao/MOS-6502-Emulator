@@ -1,9 +1,9 @@
 CC = cc
-SRC = $(wildcard src/*.c)
 HR = $(wildcard include/*.h)
+SRC = $(wildcard src/*.c)
 OBJ = $(patsubst src/%.c, build/%.o, $(SRC))
 SDL_PATH = assets/SDL3
-CFLAGS = -Iinclude #-Werror -Wextra -Wall
+CFLAGS = -Iinclude
 LDFLAGS = -Llib -Wl,-rpath,lib -Wl,-lSDL3
 NAME = mos6502
 

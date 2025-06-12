@@ -45,7 +45,7 @@ extern "C" {
  * Printable format: "%d.%d.%d", MAJOR, MINOR, MICRO
  */
 #define SDL_TTF_MAJOR_VERSION   3
-#define SDL_TTF_MINOR_VERSION   1
+#define SDL_TTF_MINOR_VERSION   3
 #define SDL_TTF_MICRO_VERSION   0
 
 /**
@@ -160,7 +160,7 @@ extern SDL_DECLSPEC TTF_Font * SDLCALL TTF_OpenFont(const char *file, float ptsi
  * the last indexed size will be the default.
  *
  * If `closeio` is true, `src` will be automatically closed once the font is
- * closed. Otherwise you should close `src` yourself after closing the font.
+ * closed. Otherwise you should keep `src` open until the font is closed.
  *
  * When done with the returned TTF_Font, use TTF_CloseFont() to dispose of it.
  *
@@ -187,11 +187,11 @@ extern SDL_DECLSPEC TTF_Font * SDLCALL TTF_OpenFontIO(SDL_IOStream *src, bool cl
  * - `TTF_PROP_FONT_CREATE_FILENAME_STRING`: the font file to open, if an
  *   SDL_IOStream isn't being used. This is required if
  *   `TTF_PROP_FONT_CREATE_IOSTREAM_POINTER` and
- *   `TTF_PROP_FONT_CREATE_EXISTING_FONT` aren't set.
+ *   `TTF_PROP_FONT_CREATE_EXISTING_FONT_POINTER` aren't set.
  * - `TTF_PROP_FONT_CREATE_IOSTREAM_POINTER`: an SDL_IOStream containing the
  *   font to be opened. This should not be closed until the font is closed.
  *   This is required if `TTF_PROP_FONT_CREATE_FILENAME_STRING` and
- *   `TTF_PROP_FONT_CREATE_EXISTING_FONT` aren't set.
+ *   `TTF_PROP_FONT_CREATE_EXISTING_FONT_POINTER` aren't set.
  * - `TTF_PROP_FONT_CREATE_IOSTREAM_OFFSET_NUMBER`: the offset in the iostream
  *   for the beginning of the font, defaults to 0.
  * - `TTF_PROP_FONT_CREATE_IOSTREAM_AUTOCLOSE_BOOLEAN`: true if closing the
@@ -208,9 +208,9 @@ extern SDL_DECLSPEC TTF_Font * SDLCALL TTF_OpenFontIO(SDL_IOStream *src, bool cl
  * - `TTF_PROP_FONT_CREATE_VERTICAL_DPI_NUMBER`: the vertical DPI to use for
  *   font rendering, defaults to `TTF_PROP_FONT_CREATE_HORIZONTAL_DPI_NUMBER`
  *   if set, or 72 otherwise.
- * - `TTF_PROP_FONT_CREATE_EXISTING_FONT`: an optional TTF_Font that, if set,
- *   will be used as the font data source and the initial size and style of
- *   the new font.
+ * - `TTF_PROP_FONT_CREATE_EXISTING_FONT_POINTER`: an optional TTF_Font that,
+ *   if set, will be used as the font data source and the initial size and
+ *   style of the new font.
  *
  * \param props the properties to use.
  * \returns a valid TTF_Font, or NULL on failure; call SDL_GetError() for more
@@ -232,7 +232,7 @@ extern SDL_DECLSPEC TTF_Font * SDLCALL TTF_OpenFontWithProperties(SDL_Properties
 #define TTF_PROP_FONT_CREATE_FACE_NUMBER                "SDL_ttf.font.create.face"
 #define TTF_PROP_FONT_CREATE_HORIZONTAL_DPI_NUMBER      "SDL_ttf.font.create.hdpi"
 #define TTF_PROP_FONT_CREATE_VERTICAL_DPI_NUMBER        "SDL_ttf.font.create.vdpi"
-#define TTF_PROP_FONT_CREATE_EXISTING_FONT              "SDL_ttf.font.create.existing_font"
+#define TTF_PROP_FONT_CREATE_EXISTING_FONT_POINTER      "SDL_ttf.font.create.existing_font"
 
 /**
  * Create a copy of an existing font.
@@ -445,7 +445,7 @@ extern SDL_DECLSPEC bool SDLCALL TTF_GetFontDPI(TTF_Font *font, int *hdpi, int *
  * SDL_ttf. A combination of these flags can be used with functions that set
  * or query font style, such as TTF_SetFontStyle or TTF_GetFontStyle.
  *
- * \since This function is available since SDL_ttf 3.0.0.
+ * \since This datatype is available since SDL_ttf 3.0.0.
  *
  * \sa TTF_SetFontStyle
  * \sa TTF_GetFontStyle
@@ -558,7 +558,8 @@ extern SDL_DECLSPEC int SDLCALL TTF_GetFontOutline(const TTF_Font *font);
  */
 typedef enum TTF_HintingFlags
 {
-    TTF_HINTING_NORMAL = 0,     /**< Normal hinting applies standard grid-fitting. */
+    TTF_HINTING_INVALID = -1,
+    TTF_HINTING_NORMAL,         /**< Normal hinting applies standard grid-fitting. */
     TTF_HINTING_LIGHT,          /**< Light hinting applies subtle adjustments to improve rendering. */
     TTF_HINTING_MONO,           /**< Monochrome hinting adjusts the font for better rendering at lower resolutions. */
     TTF_HINTING_NONE,           /**< No hinting, the font is rendered without any grid-fitting. */
@@ -615,7 +616,8 @@ extern SDL_DECLSPEC int SDLCALL TTF_GetNumFontFaces(const TTF_Font *font);
  * - `TTF_HINTING_LIGHT_SUBPIXEL` (available in SDL_ttf 3.0.0 and later)
  *
  * \param font the font to query.
- * \returns the font's current hinter value.
+ * \returns the font's current hinter value, or TTF_HINTING_INVALID if the
+ *          font is invalid.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -628,30 +630,33 @@ extern SDL_DECLSPEC TTF_HintingFlags SDLCALL TTF_GetFontHinting(const TTF_Font *
 /**
  * Enable Signed Distance Field rendering for a font.
  *
- * SDF is a technique that helps fonts look sharp even when scaling and rotating, and requires special shader support for display.
+ * SDF is a technique that helps fonts look sharp even when scaling and
+ * rotating, and requires special shader support for display.
  *
- * This works with Blended APIs, and generates the raw signed distance values in the alpha channel of the resulting texture.
+ * This works with Blended APIs, and generates the raw signed distance values
+ * in the alpha channel of the resulting texture.
  *
- * This updates any TTF_Text objects using this font, and clears already-generated glyphs, if any, from the cache.
+ * This updates any TTF_Text objects using this font, and clears
+ * already-generated glyphs, if any, from the cache.
  *
  * \param font the font to set SDF support on.
  * \param enabled true to enable SDF, false to disable.
- * \returns true on success or false on failure; call SDL_GetError()
- *          for more information.
+ * \returns true on success or false on failure; call SDL_GetError() for more
+ *          information.
  *
- * \threadsafety This function should be called on the thread that created the font.
+ * \threadsafety This function should be called on the thread that created the
+ *               font.
  *
  * \since This function is available since SDL_ttf 3.0.0.
  *
  * \sa TTF_GetFontSDF
  */
-extern SDL_DECLSPEC bool TTF_SetFontSDF(TTF_Font *font, bool enabled);
+extern SDL_DECLSPEC bool SDLCALL TTF_SetFontSDF(TTF_Font *font, bool enabled);
 
 /**
  * Query whether Signed Distance Field rendering is enabled for a font.
  *
- * \param font the font to query
- *
+ * \param font the font to query.
  * \returns true if enabled, false otherwise.
  *
  * \threadsafety It is safe to call this function from any thread.
@@ -660,7 +665,31 @@ extern SDL_DECLSPEC bool TTF_SetFontSDF(TTF_Font *font, bool enabled);
  *
  * \sa TTF_SetFontSDF
  */
-extern SDL_DECLSPEC bool TTF_GetFontSDF(const TTF_Font *font);
+extern SDL_DECLSPEC bool SDLCALL TTF_GetFontSDF(const TTF_Font *font);
+
+/**
+ * Query a font's weight, in terms of the lightness/heaviness of the strokes.
+ *
+ * \param font the font to query.
+ * \returns the font's current weight.
+ *
+ * \threadsafety This function should be called on the thread that created the
+ *               font.
+ *
+ * \since This function is available since SDL_ttf 3.2.2.
+ */
+extern SDL_DECLSPEC int SDLCALL TTF_GetFontWeight(const TTF_Font *font);
+
+#define TTF_FONT_WEIGHT_THIN        100 /**< Thin (100) named font weight value */
+#define TTF_FONT_WEIGHT_EXTRA_LIGHT 200 /**< ExtraLight (200) named font weight value */
+#define TTF_FONT_WEIGHT_LIGHT       300 /**< Light (300) named font weight value */
+#define TTF_FONT_WEIGHT_NORMAL      400 /**< Normal (400) named font weight value */
+#define TTF_FONT_WEIGHT_MEDIUM      500 /**< Medium (500) named font weight value */
+#define TTF_FONT_WEIGHT_SEMI_BOLD   600 /**< SemiBold (600) named font weight value */
+#define TTF_FONT_WEIGHT_BOLD        700 /**< Bold (700) named font weight value */
+#define TTF_FONT_WEIGHT_EXTRA_BOLD  800 /**< ExtraBold (800) named font weight value */
+#define TTF_FONT_WEIGHT_BLACK       900 /**< Black (900) named font weight value */
+#define TTF_FONT_WEIGHT_EXTRA_BLACK 950 /**< ExtraBlack (950) named font weight value */
 
 /**
  * The horizontal alignment used when rendering wrapped text.
@@ -838,8 +867,7 @@ extern SDL_DECLSPEC bool SDLCALL TTF_FontIsFixedWidth(const TTF_Font *font);
  *
  * Scalability lets us distinguish between outline and bitmap fonts.
  *
- * \param font the font to query
- *
+ * \param font the font to query.
  * \returns true if the font is scalable, false otherwise.
  *
  * \threadsafety It is safe to call this function from any thread.
@@ -848,7 +876,7 @@ extern SDL_DECLSPEC bool SDLCALL TTF_FontIsFixedWidth(const TTF_Font *font);
  *
  * \sa TTF_SetFontSDF
  */
-extern SDL_DECLSPEC bool TTF_FontIsScalable(const TTF_Font *font);
+extern SDL_DECLSPEC bool SDLCALL TTF_FontIsScalable(const TTF_Font *font);
 
 /**
  * Query a font's family name.
@@ -942,14 +970,104 @@ extern SDL_DECLSPEC bool SDLCALL TTF_SetFontDirection(TTF_Font *font, TTF_Direct
 extern SDL_DECLSPEC TTF_Direction SDLCALL TTF_GetFontDirection(TTF_Font *font);
 
 /**
+ * Convert from a 4 character string to a 32-bit tag.
+ *
+ * \param string the 4 character string to convert.
+ * \returns the 32-bit representation of the string.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL_ttf 3.0.0.
+ *
+ * \sa TTF_TagToString
+ */
+extern SDL_DECLSPEC Uint32 SDLCALL TTF_StringToTag(const char *string);
+
+/**
+ * Convert from a 32-bit tag to a 4 character string.
+ *
+ * \param tag the 32-bit tag to convert.
+ * \param string a pointer filled in with the 4 character representation of
+ *               the tag.
+ * \param size the size of the buffer pointed at by string, should be at least
+ *             4.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL_ttf 3.0.0.
+ *
+ * \sa TTF_TagToString
+ */
+extern SDL_DECLSPEC void SDLCALL TTF_TagToString(Uint32 tag, char *string, size_t size);
+
+/**
  * Set the script to be used for text shaping by a font.
  *
- * This returns false if SDL_ttf isn't build with HarfBuzz support.
+ * This returns false if SDL_ttf isn't built with HarfBuzz support.
  *
  * This updates any TTF_Text objects using this font.
  *
  * \param font the font to modify.
- * \param script a script tag in the format used by HarfBuzz.
+ * \param script an
+ *               [ISO 15924 code](https://unicode.org/iso15924/iso15924-codes.html)
+ *               .
+ * \returns true on success or false on failure; call SDL_GetError() for more
+ *          information.
+ *
+ * \threadsafety This function should be called on the thread that created the
+ *               font.
+ *
+ * \since This function is available since SDL_ttf 3.0.0.
+ *
+ * \sa TTF_StringToTag
+ */
+extern SDL_DECLSPEC bool SDLCALL TTF_SetFontScript(TTF_Font *font, Uint32 script);
+
+/**
+ * Get the script used for text shaping a font.
+ *
+ * \param font the font to query.
+ * \returns an
+ *          [ISO 15924 code](https://unicode.org/iso15924/iso15924-codes.html)
+ *          or 0 if a script hasn't been set.
+ *
+ * \threadsafety This function should be called on the thread that created the
+ *               font.
+ *
+ * \since This function is available since SDL_ttf 3.0.0.
+ *
+ * \sa TTF_TagToString
+ */
+extern SDL_DECLSPEC Uint32 SDLCALL TTF_GetFontScript(TTF_Font *font);
+
+/**
+ * Get the script used by a 32-bit codepoint.
+ *
+ * \param ch the character code to check.
+ * \returns an
+ *          [ISO 15924 code](https://unicode.org/iso15924/iso15924-codes.html)
+ *          on success, or 0 on failure; call SDL_GetError() for more
+ *          information.
+ *
+ * \threadsafety This function is thread-safe.
+ *
+ * \since This function is available since SDL_ttf 3.0.0.
+ *
+ * \sa TTF_TagToString
+ */
+extern SDL_DECLSPEC Uint32 SDLCALL TTF_GetGlyphScript(Uint32 ch);
+
+/**
+ * Set language to be used for text shaping by a font.
+ *
+ * If SDL_ttf was not built with HarfBuzz support, this function returns
+ * false.
+ *
+ * This updates any TTF_Text objects using this font.
+ *
+ * \param font the font to specify a language for.
+ * \param language_bcp47 a null-terminated string containing the desired
+ *                       language's BCP47 code. Or null to reset the value.
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
@@ -958,51 +1076,7 @@ extern SDL_DECLSPEC TTF_Direction SDLCALL TTF_GetFontDirection(TTF_Font *font);
  *
  * \since This function is available since SDL_ttf 3.0.0.
  */
-extern SDL_DECLSPEC bool SDLCALL TTF_SetFontScript(TTF_Font *font, Uint32 script);
-
-/**
- * Get the script used for text shaping a font.
- *
- * \param font the font to query.
- * \returns a script tag in the format used by HarfBuzz.
- *
- * \threadsafety This function should be called on the thread that created the
- *               font.
- *
- * \since This function is available since SDL_ttf 3.0.0.
- */
-extern SDL_DECLSPEC Uint32 SDLCALL TTF_GetFontScript(TTF_Font *font);
-
-/**
- * Get the script used by a 32-bit codepoint.
- *
- * \param ch the character code to check.
- * \returns a script tag in the format used by HarfBuzz on success, or 0 on
- *          failure; call SDL_GetError() for more information.
- *
- * \threadsafety This function is thread-safe.
- *
- * \since This function is available since SDL_ttf 3.0.0.
- */
-extern SDL_DECLSPEC Uint32 SDLCALL TTF_GetGlyphScript(Uint32 ch);
-
-/**
- * Set language to be used for text shaping by a font.
- *
- * If SDL_ttf was not built with HarfBuzz support, this function returns false.
- *
- * This updates any TTF_Text objects using this font.
- *
- * \param font the font to specify a language for.
- * \param language_bcp47 a null-terminated string containing the desired language's BCP47 code. Or null to reset the value.
- * \returns true on success or false on failure; call SDL_GetError()
- *          for more information.
- *
- * \threadsafety This function should be called on the thread that created the font.
- *
- * \since This function is available since SDL_ttf 3.0.0.
- */
-extern SDL_DECLSPEC bool TTF_SetFontLanguage(TTF_Font *font, const char *language_bcp47);
+extern SDL_DECLSPEC bool SDLCALL TTF_SetFontLanguage(TTF_Font *font, const char *language_bcp47);
 
 /**
  * Check whether a glyph is provided by the font for a UNICODE codepoint.
@@ -1105,15 +1179,17 @@ extern SDL_DECLSPEC bool SDLCALL TTF_GetGlyphMetrics(TTF_Font *font, Uint32 ch, 
  * \param font the font to query.
  * \param previous_ch the previous codepoint.
  * \param ch the current codepoint.
- * \param kerning a pointer filled in with the kerning size between the two glyphs, in pixels, may be NULL.
- * \returns true on success or false on failure; call SDL_GetError()
- *          for more information.
+ * \param kerning a pointer filled in with the kerning size between the two
+ *                glyphs, in pixels, may be NULL.
+ * \returns true on success or false on failure; call SDL_GetError() for more
+ *          information.
  *
- * \threadsafety This function should be called on the thread that created the font.
+ * \threadsafety This function should be called on the thread that created the
+ *               font.
  *
  * \since This function is available since SDL_ttf 3.0.0.
  */
-extern SDL_DECLSPEC bool TTF_GetGlyphKerning(TTF_Font *font, Uint32 previous_ch, Uint32 ch, int *kerning);
+extern SDL_DECLSPEC bool SDLCALL TTF_GetGlyphKerning(TTF_Font *font, Uint32 previous_ch, Uint32 ch, int *kerning);
 
 /**
  * Calculate the dimensions of a rendered string of UTF-8 text.
@@ -1726,6 +1802,8 @@ extern SDL_DECLSPEC void SDLCALL TTF_DestroySurfaceTextEngine(TTF_TextEngine *en
  * \since This function is available since SDL_ttf 3.0.0.
  *
  * \sa TTF_DestroyRendererTextEngine
+ * \sa TTF_DrawRendererText
+ * \sa TTF_CreateRendererTextEngineWithProperties
  */
 extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateRendererTextEngine(SDL_Renderer *renderer);
 
@@ -1735,10 +1813,10 @@ extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateRendererTextEngine(SDL_Re
  *
  * These are the supported properties:
  *
- * - `TTF_PROP_RENDERER_TEXT_ENGINE_RENDERER`: the renderer to use for
+ * - `TTF_PROP_RENDERER_TEXT_ENGINE_RENDERER_POINTER`: the renderer to use for
  *   creating textures and drawing text
- * - `TTF_PROP_RENDERER_TEXT_ENGINE_ATLAS_TEXTURE_SIZE`: the size of the
- *   texture atlas
+ * - `TTF_PROP_RENDERER_TEXT_ENGINE_ATLAS_TEXTURE_SIZE_NUMBER`: the size of
+ *   the texture atlas
  *
  * \param props the properties to use.
  * \returns a TTF_TextEngine object or NULL on failure; call SDL_GetError()
@@ -1749,12 +1827,14 @@ extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateRendererTextEngine(SDL_Re
  *
  * \since This function is available since SDL_ttf 3.0.0.
  *
+ * \sa TTF_CreateRendererTextEngine
  * \sa TTF_DestroyRendererTextEngine
+ * \sa TTF_DrawRendererText
  */
 extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateRendererTextEngineWithProperties(SDL_PropertiesID props);
 
-#define TTF_PROP_RENDERER_TEXT_ENGINE_RENDERER                 "SDL_ttf.renderer_text_engine.create.renderer"
-#define TTF_PROP_RENDERER_TEXT_ENGINE_ATLAS_TEXTURE_SIZE       "SDL_ttf.renderer_text_engine.create.atlas_texture_size"
+#define TTF_PROP_RENDERER_TEXT_ENGINE_RENDERER_POINTER          "SDL_ttf.renderer_text_engine.create.renderer"
+#define TTF_PROP_RENDERER_TEXT_ENGINE_ATLAS_TEXTURE_SIZE_NUMBER "SDL_ttf.renderer_text_engine.create.atlas_texture_size"
 
 /**
  * Draw text to an SDL renderer.
@@ -1812,7 +1892,9 @@ extern SDL_DECLSPEC void SDLCALL TTF_DestroyRendererTextEngine(TTF_TextEngine *e
  *
  * \since This function is available since SDL_ttf 3.0.0.
  *
+ * \sa TTF_CreateGPUTextEngineWithProperties
  * \sa TTF_DestroyGPUTextEngine
+ * \sa TTF_GetGPUTextDrawData
  */
 extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateGPUTextEngine(SDL_GPUDevice *device);
 
@@ -1822,10 +1904,10 @@ extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateGPUTextEngine(SDL_GPUDevi
  *
  * These are the supported properties:
  *
- * - `TTF_PROP_GPU_TEXT_ENGINE_DEVICE`: the SDL_GPUDevice to use for creating
- *   textures and drawing text.
- * - `TTF_PROP_GPU_TEXT_ENGINE_ATLAS_TEXTURE_SIZE`: the size of the texture
- *   atlas
+ * - `TTF_PROP_GPU_TEXT_ENGINE_DEVICE_POINTER`: the SDL_GPUDevice to use for
+ *   creating textures and drawing text.
+ * - `TTF_PROP_GPU_TEXT_ENGINE_ATLAS_TEXTURE_SIZE_NUMBER`: the size of the
+ *   texture atlas
  *
  * \param props the properties to use.
  * \returns a TTF_TextEngine object or NULL on failure; call SDL_GetError()
@@ -1836,12 +1918,14 @@ extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateGPUTextEngine(SDL_GPUDevi
  *
  * \since This function is available since SDL_ttf 3.0.0.
  *
+ * \sa TTF_CreateGPUTextEngine
  * \sa TTF_DestroyGPUTextEngine
+ * \sa TTF_GetGPUTextDrawData
  */
 extern SDL_DECLSPEC TTF_TextEngine * SDLCALL TTF_CreateGPUTextEngineWithProperties(SDL_PropertiesID props);
 
-#define TTF_PROP_GPU_TEXT_ENGINE_DEVICE                   "SDL_ttf.gpu_text_engine.create.device"
-#define TTF_PROP_GPU_TEXT_ENGINE_ATLAS_TEXTURE_SIZE       "SDL_ttf.gpu_text_engine.create.atlas_texture_size"
+#define TTF_PROP_GPU_TEXT_ENGINE_DEVICE_POINTER            "SDL_ttf.gpu_text_engine.create.device"
+#define TTF_PROP_GPU_TEXT_ENGINE_ATLAS_TEXTURE_SIZE_NUMBER "SDL_ttf.gpu_text_engine.create.atlas_texture_size"
 
 /**
  * Draw sequence returned by TTF_GetGPUTextDrawData
@@ -1890,7 +1974,7 @@ typedef struct TTF_GPUAtlasDrawSequence
  * \sa TTF_CreateGPUTextEngine
  * \sa TTF_CreateText
  */
-extern SDL_DECLSPEC TTF_GPUAtlasDrawSequence* SDLCALL TTF_GetGPUTextDrawData(TTF_Text *text);
+extern SDL_DECLSPEC TTF_GPUAtlasDrawSequence * SDLCALL TTF_GetGPUTextDrawData(TTF_Text *text);
 
 /**
  * Destroy a text engine created for drawing text with the SDL GPU API.
@@ -2102,10 +2186,12 @@ extern SDL_DECLSPEC TTF_Direction SDLCALL TTF_GetTextDirection(TTF_Text *text);
 /**
  * Set the script to be used for text shaping a text object.
  *
- * This returns false if SDL_ttf isn't build with HarfBuzz support.
+ * This returns false if SDL_ttf isn't built with HarfBuzz support.
  *
  * \param text the text to modify.
- * \param script a script tag in the format used by HarfBuzz.
+ * \param script an
+ *               [ISO 15924 code](https://unicode.org/iso15924/iso15924-codes.html)
+ *               .
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
@@ -2113,6 +2199,8 @@ extern SDL_DECLSPEC TTF_Direction SDLCALL TTF_GetTextDirection(TTF_Text *text);
  *               text.
  *
  * \since This function is available since SDL_ttf 3.0.0.
+ *
+ * \sa TTF_StringToTag
  */
 extern SDL_DECLSPEC bool SDLCALL TTF_SetTextScript(TTF_Text *text, Uint32 script);
 
@@ -2122,12 +2210,17 @@ extern SDL_DECLSPEC bool SDLCALL TTF_SetTextScript(TTF_Text *text, Uint32 script
  * This defaults to the script of the font used by the text object.
  *
  * \param text the text to query.
- * \returns a script tag in the format used by HarfBuzz.
+ * \returns an
+ *          [ISO 15924 code](https://unicode.org/iso15924/iso15924-codes.html)
+ *          or 0 if a script hasn't been set on either the text object or the
+ *          font.
  *
  * \threadsafety This function should be called on the thread that created the
  *               text.
  *
  * \since This function is available since SDL_ttf 3.0.0.
+ *
+ * \sa TTF_TagToString
  */
 extern SDL_DECLSPEC Uint32 SDLCALL TTF_GetTextScript(TTF_Text *text);
 
@@ -2599,6 +2692,8 @@ extern SDL_DECLSPEC bool SDLCALL TTF_GetTextSubStringForPoint(TTF_Text *text, in
  *
  * \param text the TTF_Text to query.
  * \param substring the TTF_SubString to query.
+ * \param previous a pointer filled in with the previous substring in the text
+ *                 object.
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
