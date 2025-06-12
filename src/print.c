@@ -1,4 +1,4 @@
-#include "mos6502.h"
+#include <mos6502.h> 
 
 void	convert_hex_str(unsigned num, char *res, unsigned res_size) {
 	unsigned num_size = 0;
