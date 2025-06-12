@@ -1,4 +1,4 @@
-#include "mos6502.h"
+#include <mos6502.h> 
 
 // /// /	INSTRUCTIONS	
 
