@@ -91,14 +91,14 @@ int	main(int c, char **v) {
 	draw_bg(renderer, 0x0000FFFF);
 	SDL_RenderPresent(renderer);
 
+	TTF_Font *font = TTF_OpenFont("./assets/fonts/RobotoMono_Regular.ttf", 1);
 	SDL_Color color = { 0, 0, 255, 255 };
-	SDL_Surface *surface = TTF_RenderText_Solid("./assets/fonts/RobotoMono_Regular.ttf", "SHIT_TEXT", color);
+	SDL_Surface *surface = TTF_RenderText_Solid(font, "SHIT_TEXT", 0, color);
 	SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_FreeSurface(surface);
-	SDL_Rect rect = { 20, 100, 100, 20 };
-	SDL_RenderCopy(renderer, text, NULL, &rect);
+	SDL_DestroySurface(surface);
+	SDL_FRect rect = { 20, 100, 100, 20 };
+	SDL_RenderTexture(renderer, text, NULL, &rect);
 	SDL_DestroyTexture(text);
-
 	
 	sleep(2);
 	exit(2);

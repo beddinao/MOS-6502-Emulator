@@ -10,6 +10,9 @@
 #include <pthread.h>
 //#include <curses.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_pixels.h>
+#include <SDL3/SDL_rect.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <signal.h>
 
 #define ADDR_RANGE		0x10000 // 64Kb - 6502 addressable range
