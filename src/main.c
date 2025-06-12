@@ -7,8 +7,14 @@ void	sig_handle(int s) {
 	thread_data->halt = 1;
 	pthread_mutex_unlock(&thread_data->halt_mutex);
 	pthread_join(thread_data->worker, NULL);
+
 	pthread_mutex_destroy(&thread_data->halt_mutex);
 	pthread_mutex_destroy(&thread_data->data_mutex);
+
+	SDL_DestroyRenderer(thread_data->renderer);
+	SDL_DestroyWindow(thread_data->win);
+	SDL_Quit();
+
 	free(thread_data->mos6502->bus);
 	free(thread_data->mos6502);
 	free(thread_data);
@@ -60,16 +66,41 @@ int	main(int c, char **v) {
 	}
 	mos6502->load_ROM(bus);
 
-	/// // /		OUTPUT WORKER
+	/// // /		SDL
+	SDL_Window *win = NULL;
+	SDL_Renderer *renderer = NULL;
+	if (!SDL_Init(SDL_INIT_EVENTS)) {
+		free(mos6502);
+		free(bus);
+		return 1;
+	}
+	win = SDL_CreateWindow("6502 cpu emulator", DEF_WIN_WIDTH, DEF_WIN_HEIGHT,
+			SDL_WINDOW_RESIZABLE|
+			SDL_WINDOW_ALWAYS_ON_TOP);
+	if (!win || !(renderer = SDL_CreateRenderer(win, NULL))) {
+		if (win) SDL_DestroyWindow(win);
+		free(mos6502);
+		free(bus);
+		return 1;
+	}
+	SDL_SetWindowMinimumSize(win, WIN_MIN_WIDTH, WIN_MIN_HEIGHT);
+	thread_data->win = win;
+	thread_data->renderer = renderer;
+	thread_data->win_width = DEF_WIN_WIDTH;
+	thread_data->win_height = DEF_WIN_HEIGHT;
+	/*draw_bg(renderer, 0x0000FFFF);
+	SDL_RenderPresent(renderer);*/
+
+	/// // /		MAIN CYCLE WORKER
 	pthread_mutex_init(&thread_data->halt_mutex, NULL);
 	pthread_mutex_init(&thread_data->data_mutex, NULL);
-	pthread_create(&thread_data->worker, NULL, print_state, thread_data);
+	pthread_create(&thread_data->worker, NULL, mos6502->instruction_cycle, thread_data);
 
 	// / //		CLEAN
 	signal(SIGINT, sig_handle);
 	signal(SIGQUIT, sig_handle);
 	signal(SIGTERM, sig_handle);
 
-	/// / //		CYCLE
-	mos6502->instruction_cycle(thread_data);
+	/// / //		OUTPUT	
+	print_state(thread_data);
 }

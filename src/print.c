@@ -24,55 +24,71 @@ void	convert_hex_str(unsigned num, char *res, unsigned res_size) {
 		res[0] = '0';
 }
 
+void	draw_bg(SDL_Renderer *renderer, uint32_t color) {
+	SDL_SetRenderDrawColor(renderer,
+			(color >> 24) & 0xFF,
+			(color >> 16) & 0xFF,
+			(color >> 8) & 0xFF,
+			color & 0xFF);
+	SDL_RenderClear(renderer);
+}
+
 unsigned	print_field(unsigned x, unsigned y, unsigned num, char *str, char *res) {
 	unsigned str_len = strlen(str);
-	mvaddstr(y, x, str);
+	//mvaddstr(y, x, str);
 	convert_hex_str(num, res, 1024);
-	mvaddstr(y, x + str_len, res);
+	//mvaddstr(y, x + str_len, res);
 	return x + str_len + strlen(res);
 }
 
-void	*print_state(void *p) {
+void	print_state(void *p) {
 	_worker	*thread_data = (_worker*)p;
 	_6502	*mos6502 = thread_data->mos6502;
 	unsigned	program_start, program_end, stack_start;
 	char	res[1024];
 	unsigned	x_index, y_index;
 
-	initscr();
-	start_color();
-	init_pair(1, COLOR_WHITE, COLOR_BLACK);
-	init_pair(2, COLOR_RED, COLOR_BLACK);
-	unsigned	width = COLS / 4,
+	unsigned	width = thread_data->win_width / 4,
 		x_start = width / 2;
+
+	SDL_Event event;
+	memset(&event, 0, sizeof(event));
+
 	while (1) {
 		y_index = 1;
-		pthread_mutex_lock(&thread_data->halt_mutex);
-		if (thread_data->halt) {
-			pthread_mutex_unlock(&thread_data->halt_mutex);
-			break;
+		draw_bg(thread_data->renderer, 0xFF0000FF);
+
+		if (SDL_PollEvent(&event)) {
+			switch (event.type) {
+				case SDL_EVENT_QUIT: sig_handle(0);
+				case SDL_EVENT_KEY_DOWN:
+						if (event.key.key == SDLK_ESCAPE)
+							sig_handle(0);
+						break;
+				default: break;
+			}
 		}
-		pthread_mutex_unlock(&thread_data->halt_mutex);
+
 		pthread_mutex_lock(&thread_data->data_mutex);
 		/// / //	REGISTERS
-		mvaddstr(0, 0, "PC:");
-		attron(COLOR_PAIR(2));
+		//mvaddstr(0, 0, "PC:");
+		//attron(COLOR_PAIR(2));
 		print_field(3, 0, mos6502->PC, " ", res);
-		attroff(COLOR_PAIR(2));
-		attron(COLOR_PAIR(1));
+		//attroff(COLOR_PAIR(2));
+		//attron(COLOR_PAIR(1));
 		print_field(0, y_index++, mos6502->A, "A: ", res);
 		print_field(0, y_index++, mos6502->X, "X: ", res);
 		print_field(0, y_index++, mos6502->Y, "Y: ", res);
 		print_field(0, y_index++, mos6502->SP, "SP: ", res);
-		mvaddstr(y_index, 0, "SR: ");
-		mvaddstr(y_index, 4, mos6502->get_flag(mos6502, 'N') ? "1" : "0");
-		mvaddstr(y_index, 6, mos6502->get_flag(mos6502, 'V') ? "1 - " : "0 - ");
-		mvaddstr(y_index, 10, mos6502->get_flag(mos6502, 'B') ? "1" : "0");
-		mvaddstr(y_index, 12, mos6502->get_flag(mos6502, 'D') ? "1" : "0");
-		mvaddstr(y_index, 14, mos6502->get_flag(mos6502, 'I') ? "1" : "0");
-		mvaddstr(y_index, 16, mos6502->get_flag(mos6502, 'Z') ? "1" : "0");
-		mvaddstr(y_index++, 18, mos6502->get_flag(mos6502, 'C') ? "1" : "0");
-		mvaddstr(y_index, 4, "N V - B D I Z C");
+		//mvaddstr(y_index, 0, "SR: ");
+		//mvaddstr(y_index, 4, mos6502->get_flag(mos6502, 'N') ? "1" : "0");
+		//mvaddstr(y_index, 6, mos6502->get_flag(mos6502, 'V') ? "1 - " : "0 - ");
+		//mvaddstr(y_index, 10, mos6502->get_flag(mos6502, 'B') ? "1" : "0");
+		//mvaddstr(y_index, 12, mos6502->get_flag(mos6502, 'D') ? "1" : "0");
+		//mvaddstr(y_index, 14, mos6502->get_flag(mos6502, 'I') ? "1" : "0");
+		//mvaddstr(y_index, 16, mos6502->get_flag(mos6502, 'Z') ? "1" : "0");
+		//mvaddstr(y_index++, 18, mos6502->get_flag(mos6502, 'C') ? "1" : "0");
+		//mvaddstr(y_index, 4, "N V - B D I Z C");
 		y_index += 2;
 		print_field(0, y_index, mos6502->opcode, "opcode: ", res);
 		y_index += 2;
@@ -89,19 +105,19 @@ void	*print_state(void *p) {
 		x_index = print_field(x_index, y_index, mos6502->bus->ram_prgm_size, ") ROM-size ", res);
 		x_index = print_field(x_index, y_index, mos6502->bus->bank_position, "(bank ", res);
 		x_index = print_field(x_index, y_index, mos6502->bus->rom_prgm_size, ")/", res);
-		mvaddstr(y_index++, x_index, ",");
+		//mvaddstr(y_index++, x_index, ",");
 		x_index = print_field(x_start, y_index, program_start, "ROM-part (", res);
 		x_index = print_field(x_index, y_index, program_end, " -> ", res);
-		mvaddstr(y_index++, x_index, "):");
+		//mvaddstr(y_index++, x_index, "):");
 		/// / //	ROM DUMP
 		for (unsigned ram_addr = program_start, color_mode = 1; ram_addr < program_end; ram_addr += width) {
 			x_index = print_field(x_start, y_index, ram_addr, "", res);
-			mvaddstr(y_index, x_index++, ":");
+			//mvaddstr(y_index, x_index++, ":");
 			for (unsigned col = 0; col < width && ram_addr + col < program_end; col++) {
 				color_mode = (ram_addr + col == mos6502->PC) ? 2 : 1;
-				attron(COLOR_PAIR(color_mode));
+				//attron(COLOR_PAIR(color_mode));
 				x_index = print_field(x_index, y_index, mos6502->bus->ram[ram_addr + col], " ", res);
-				attroff(COLOR_PAIR(color_mode));
+				//attroff(COLOR_PAIR(color_mode));
 			}
 			y_index++;
 		}
@@ -110,26 +126,23 @@ void	*print_state(void *p) {
 		stack_start = (STACK_START + mos6502->SP) - 0x32;
 		x_index = print_field(x_start, y_index, stack_start, "Stack-part(", res);
 		x_index = print_field(x_index, y_index, STACK_END, " - ", res);
-		mvaddstr(y_index++, x_index, "):");
+		//mvaddstr(y_index++, x_index, "):");
 		/// / //	STACK DUMP
 		for (unsigned ram_addr = stack_start, color_mode = 1; ram_addr < STACK_END; ram_addr += width) {
 			x_index = print_field(x_start, y_index, ram_addr, "", res);
-			mvaddstr(y_index, x_index++, ":");
+			//mvaddstr(y_index, x_index++, ":");
 			for (unsigned col = 0; col < width && ram_addr + col < STACK_END; col++) {
 				color_mode = (ram_addr + col == (unsigned)(mos6502->SP + STACK_START)) ? 2 : 1;
-				attron(COLOR_PAIR(color_mode));
+				//attron(COLOR_PAIR(color_mode));
 				x_index = print_field(x_index, y_index, mos6502->bus->ram[ram_addr + col], " ", res);
-				attroff(COLOR_PAIR(color_mode));
+				//attroff(COLOR_PAIR(color_mode));
 			}
 			y_index++;
 		}
 		pthread_mutex_unlock(&thread_data->data_mutex);
-		attroff(COLOR_PAIR(1));
-		refresh();
-		erase();
+		SDL_RenderPresent(thread_data->renderer);
 		usleep(FRAME_RATE);
 	}
-	endwin();
-	return 0;
+	sig_handle(0);
 }
 
