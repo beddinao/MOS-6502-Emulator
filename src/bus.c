@@ -1,4 +1,4 @@
-#include "mos6502.h"
+#include <mos6502.h> 
 
 uint8_t	read_(uint8_t *ram, uint16_t addr) {
 	return ram[addr];
