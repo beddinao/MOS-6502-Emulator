@@ -66,7 +66,6 @@ void	poll_events() {
 				if (event.key.key == SDLK_ESCAPE)
 					sig_handle(0);
 				break;
-			default:  break;
 		}
 	}
 }
@@ -88,8 +87,8 @@ void	print_state(void *p) {
 		draw_bg(thread_data->renderer, 0x000000FF);
 		pthread_mutex_lock(&thread_data->data_mutex);
 		/// / //	REGISTERS
-		color = 0xFFFFFFFF;
 		poll_events();
+		color = 0xFFFFFFFF;
 		draw_text(thread_data, "PC:", 0, 0, color);
 		color = 0xFF0000FF;
 		print_field(thread_data, 3, 0, mos6502->PC, " ", res, color);
@@ -129,6 +128,7 @@ void	print_state(void *p) {
 		x_index = print_field(thread_data, x_index, y_index, program_end, " -> ", res, color);
 		draw_text(thread_data, "):", x_index, y_index++, color);
 		/// / //	ROM DUMP
+		poll_events();
 		for (unsigned ram_addr = program_start, color_mode = 1; ram_addr < program_end; ram_addr += width) {
 			x_index = print_field(thread_data, x_start, y_index, ram_addr, "", res, 0xFFFFFFFF);
 			draw_text(thread_data, ":", x_index++, y_index, 0xFFFFFFFF);
@@ -138,7 +138,7 @@ void	print_state(void *p) {
 				x_index = print_field(thread_data, x_index, y_index, mos6502->bus->ram[ram_addr + col], " ", res, color);
 			}
 			y_index++;
-			poll_events(); // TODO: ?
+			//poll_events(); // TODO: ?
 		}
 		y_index++;
 		// /// /	STACK HEADER
@@ -159,7 +159,7 @@ void	print_state(void *p) {
 				x_index = print_field(thread_data, x_index, y_index, mos6502->bus->ram[ram_addr + col], " ", res, color);
 			}
 			y_index++;
-			poll_events(); // TODO: ?
+			//poll_events(); // TODO: ?
 		}
 		pthread_mutex_unlock(&thread_data->data_mutex);
 		SDL_RenderPresent(thread_data->renderer);
