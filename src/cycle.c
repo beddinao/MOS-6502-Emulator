@@ -2,7 +2,7 @@
 
 // /// /	CYCLE
 
-void	instruction_cycle(void *p) {
+void	*instruction_cycle(void *p) {
 	_worker	*thread_data = (_worker*)p;
 	_6502	*mos6502 = thread_data->mos6502;
 	_bus	*bus = mos6502->bus;
@@ -19,6 +19,13 @@ void	instruction_cycle(void *p) {
 	mos6502->PC = 0x400;*/
 
 	while (1) {
+		pthread_mutex_lock(&thread_data->halt_mutex);
+		if (thread_data->halt) {
+			pthread_mutex_unlock(&thread_data->halt_mutex);
+			break;
+		}
+		pthread_mutex_unlock(&thread_data->halt_mutex);
+
 		if (mos6502->cycles) {
 			mos6502->cycles--;
 			continue;
@@ -51,6 +58,7 @@ void	instruction_cycle(void *p) {
 		}
 		pthread_mutex_unlock(&thread_data->data_mutex);
 		// slowing down the cpu for debugging
-		//usleep(1000000);
+		usleep(10000);
 	}
+	return 0;
 }
