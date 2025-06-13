@@ -19,11 +19,10 @@ void	*instruction_cycle(void *p) {
 	mos6502->PC = 0x400;*/
 
 	while (1) {
-
 		pthread_mutex_lock(&thread_data->halt_mutex);
 		if (thread_data->halt) {
 			pthread_mutex_unlock(&thread_data->halt_mutex);
-			break;	
+			break;
 		}
 		pthread_mutex_unlock(&thread_data->halt_mutex);
 

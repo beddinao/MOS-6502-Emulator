@@ -58,14 +58,19 @@ unsigned	print_field(_worker *thread_data, unsigned x, unsigned y, unsigned num,
 }
 
 void	poll_events() {
-	SDL_Event event;
+	SDL_Event event = {0};
 	if (SDL_PollEvent(&event)) {
 		switch (event.type) {
-			case SDL_EVENT_QUIT: sig_handle(0);
+			case SDL_EVENT_QUIT:
+				//pthread_mutex_unlock(&thread_data->data_mutex);
+				sig_handle(0);
 			case SDL_EVENT_KEY_DOWN: 
-				if (event.key.key == SDLK_ESCAPE)
+				if (event.key.key == SDLK_ESCAPE) {
+					//pthread_mutex_unlock(&thread_data->data_mutex);
 					sig_handle(0);
-				break;
+				}
+				else	break;
+			default: break;
 		}
 	}
 }
@@ -83,11 +88,11 @@ void	print_state(void *p) {
 	uint32_t	color;
 
 	while (1) {
+		poll_events();
 		y_index = 1;
 		draw_bg(thread_data->renderer, 0x000000FF);
 		pthread_mutex_lock(&thread_data->data_mutex);
 		/// / //	REGISTERS
-		poll_events();
 		color = 0xFFFFFFFF;
 		draw_text(thread_data, "PC:", 0, 0, color);
 		color = 0xFF0000FF;
@@ -110,7 +115,7 @@ void	print_state(void *p) {
 		print_field(thread_data, 0, y_index, mos6502->opcode, "opcode: ", res, color);
 		y_index += 2;
 		// / ///	ROM DUMP HEADER
-		poll_events();
+		//poll_events();
 		program_start = mos6502->PC - 0xFF;
 		program_end = mos6502->PC + 0xFF;
 		if (program_end > PRGM_START + mos6502->bus->ram_prgm_size
@@ -128,7 +133,7 @@ void	print_state(void *p) {
 		x_index = print_field(thread_data, x_index, y_index, program_end, " -> ", res, color);
 		draw_text(thread_data, "):", x_index, y_index++, color);
 		/// / //	ROM DUMP
-		poll_events();
+		//poll_events();
 		for (unsigned ram_addr = program_start, color_mode = 1; ram_addr < program_end; ram_addr += width) {
 			x_index = print_field(thread_data, x_start, y_index, ram_addr, "", res, 0xFFFFFFFF);
 			draw_text(thread_data, ":", x_index++, y_index, 0xFFFFFFFF);
@@ -142,14 +147,14 @@ void	print_state(void *p) {
 		}
 		y_index++;
 		// /// /	STACK HEADER
-		poll_events();
+		//poll_events();
 		color = 0xFFFFFFFF;
 		stack_start = (STACK_START + mos6502->SP) - 0x32;
 		x_index = print_field(thread_data, x_start, y_index, stack_start, "Stack-part(", res, color);
 		x_index = print_field(thread_data, x_index, y_index, STACK_END, " - ", res, color);
 		draw_text(thread_data, "):", x_index, y_index++, color);
 		/// / //	STACK DUMP
-		poll_events();
+		//poll_events();
 		for (unsigned ram_addr = stack_start, color_mode = 1; ram_addr < STACK_END; ram_addr += width) {
 			x_index = print_field(thread_data, x_start, y_index, ram_addr, "", res, 0xFFFFFFFF);
 			draw_text(thread_data, ":", x_index++, y_index, 0xFFFFFFFF);
