@@ -59,7 +59,7 @@ void	*instruction_cycle(void *p) {
 		}
 		pthread_mutex_unlock(&thread_data->data_mutex);
 		// slowing down the cpu for debugging
-		//usleep(1000000);
+		usleep(10000);
 	}
 	return 0;
 }

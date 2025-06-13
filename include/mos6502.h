@@ -30,14 +30,14 @@
 #define FRAME_RATE		0x186A0 // 0.1 seconds
 
 
-#define DEF_WIN_WIDTH	0x640   // 1600px
-#define DEF_WIN_HEIGHT	0x320   // 800px
+#define DEF_WIN_WIDTH	0x7D0   // 2000px
+#define DEF_WIN_HEIGHT	0x3E8   // 1000px
 #define WIN_MIN_WIDTH	DEF_WIN_WIDTH
 #define WIN_MIN_HEIGHT	DEF_WIN_HEIGHT
 
 #define MONO_FONT		"assets/fonts/RobotoMono_Regular.ttf"
 
-#define PPL		20      // pixels per letter
+#define PPL		25      // pixels per letter
 
 
 // ANSI codes
