@@ -33,6 +33,20 @@ void	draw_bg(SDL_Renderer *renderer, uint32_t color) {
 	SDL_RenderClear(renderer);
 }
 
+void	draw_text(_worker *thread_data, char *text, int x, int y, uint32_t color) {
+	int len = strlen(text);
+	SDL_Color text_color = { color >> 24 & 0xFF, color >> 16 & 0xFF, color >> 8 & 0xFF, color & 0xFF };
+	SDL_Surface *surface = TTF_RenderText_Solid(thread_data->mono_font, text, len, text_color);
+	if (surface) {
+		SDL_Texture *texture = SDL_CreateTextureFromSurface(thread_data->renderer, surface);
+		if (!texture) return;
+		SDL_DestroySurface(surface);
+		SDL_FRect rect = { x, y, len*(PPL/2),  PPL};
+		SDL_RenderTexture(thread_data->renderer, texture, NULL, &rect);
+		SDL_DestroyTexture(texture);
+	}
+}
+
 unsigned	print_field(unsigned x, unsigned y, unsigned num, char *str, char *res) {
 	unsigned str_len = strlen(str);
 	//mvaddstr(y, x, str);
@@ -56,7 +70,8 @@ void	print_state(void *p) {
 
 	while (1) {
 		y_index = 1;
-		draw_bg(thread_data->renderer, 0xFF0000FF);
+		draw_bg(thread_data->renderer, 0x000000FF);
+		draw_text(thread_data, "PC", 100, 100, 0xFF0000FF);
 
 		if (SDL_PollEvent(&event)) {
 			switch (event.type) {
@@ -141,7 +156,7 @@ void	print_state(void *p) {
 		}
 		pthread_mutex_unlock(&thread_data->data_mutex);
 		SDL_RenderPresent(thread_data->renderer);
-		usleep(FRAME_RATE);
+		//usleep(FRAME_RATE);
 	}
 	sig_handle(0);
 }

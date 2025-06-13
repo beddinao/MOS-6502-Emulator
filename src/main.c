@@ -14,6 +14,7 @@ void	sig_handle(int s) {
 	SDL_DestroyRenderer(thread_data->renderer);
 	SDL_DestroyWindow(thread_data->win);
 	SDL_Quit();
+	TTF_Quit();
 
 	free(thread_data->mos6502->bus);
 	free(thread_data->mos6502);
@@ -22,10 +23,10 @@ void	sig_handle(int s) {
 }
 
 int	main(int c, char **v) {
-	/*if (c != 2) {
+	if (c != 2) {
 		printf("usage ./mos6502 [ROM]\n");
 		return 1;
-	}*/
+	}
 	srand(time(0));
 
 	/// / //		BUS
@@ -58,18 +59,20 @@ int	main(int c, char **v) {
 	thread_data->mos6502 = mos6502;
 
 	// / ///		ROM
-	/*if (!bus->load_ROM(bus, v[1])) {
+	if (!bus->load_ROM(bus, v[1])) {
 		printf("failed to load program to memory\n");
 		free(mos6502);
 		free(bus);
 		return 1;
 	}
-	mos6502->load_ROM(bus);*/
+	mos6502->load_ROM(bus);
 
 	/// // /		SDL
 	SDL_Window *win = NULL;
 	SDL_Renderer *renderer = NULL;
-	if (!SDL_Init(SDL_INIT_EVENTS)) {
+	if (!TTF_Init() || !SDL_Init(SDL_INIT_EVENTS)) {
+		printf("sdl initialization error: %s\n", SDL_GetError());
+		SDL_Quit(); TTF_Quit();
 		free(mos6502);
 		free(bus);
 		return 1;
@@ -77,8 +80,11 @@ int	main(int c, char **v) {
 	win = SDL_CreateWindow("6502 cpu emulator", DEF_WIN_WIDTH, DEF_WIN_HEIGHT,
 			SDL_WINDOW_RESIZABLE|
 			SDL_WINDOW_ALWAYS_ON_TOP);
-	if (!win || !(renderer = SDL_CreateRenderer(win, NULL))) {
+	TTF_Font *mono_font = TTF_OpenFont(MONO_FONT, 100);
+	if (!mono_font || !win || !(renderer = SDL_CreateRenderer(win, NULL))) {
+		printf("sdl renderer/window init error: %s\n", SDL_GetError());
 		if (win) SDL_DestroyWindow(win);
+		SDL_Quit(); TTF_Quit();
 		free(mos6502);
 		free(bus);
 		return 1;
@@ -88,20 +94,10 @@ int	main(int c, char **v) {
 	thread_data->renderer = renderer;
 	thread_data->win_width = DEF_WIN_WIDTH;
 	thread_data->win_height = DEF_WIN_HEIGHT;
-	draw_bg(renderer, 0x0000FFFF);
-	SDL_RenderPresent(renderer);
+	thread_data->mono_font = mono_font;
+	/*draw_bg(renderer, 0x0000FFFF);
+	SDL_RenderPresent(renderer);*/
 
-	TTF_Font *font = TTF_OpenFont("./assets/fonts/RobotoMono_Regular.ttf", 1);
-	SDL_Color color = { 0, 0, 255, 255 };
-	SDL_Surface *surface = TTF_RenderText_Solid(font, "SHIT_TEXT", 0, color);
-	SDL_Texture *text = SDL_CreateTextureFromSurface(renderer, surface);
-	SDL_DestroySurface(surface);
-	SDL_FRect rect = { 20, 100, 100, 20 };
-	SDL_RenderTexture(renderer, text, NULL, &rect);
-	SDL_DestroyTexture(text);
-	
-	sleep(2);
-	exit(2);
 	/// // /		MAIN CYCLE WORKER
 	pthread_mutex_init(&thread_data->halt_mutex, NULL);
 	pthread_mutex_init(&thread_data->data_mutex, NULL);

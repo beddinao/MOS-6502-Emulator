@@ -35,6 +35,10 @@
 #define WIN_MIN_WIDTH	DEF_WIN_WIDTH
 #define WIN_MIN_HEIGHT	DEF_WIN_HEIGHT
 
+#define MONO_FONT		"assets/fonts/RobotoMono_Regular.ttf"
+
+#define PPL		20      // pixels per letter
+
 
 // ANSI codes
 #define RST "\x1B[0m"
@@ -81,10 +85,12 @@ typedef	struct _worker {
 	pthread_mutex_t	halt_mutex;
 	pthread_mutex_t	data_mutex;
 	uint8_t		halt;
+				// display variables
 	SDL_Window	*win;
 	SDL_Renderer	*renderer;
 	uint16_t		win_height;
 	uint16_t		win_width;
+	TTF_Font		*mono_font;
 	_6502		*mos6502;
 }	_worker;
 
